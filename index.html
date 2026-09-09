@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Focus System — Today</title>
+<title>Focus System - Today</title>
 <link rel="stylesheet" href="styles.css">
 <script src="https://unpkg.com/lucide@latest"></script>
 </head>
@@ -25,7 +25,7 @@
       </a>
       <a href="focus.html" class="nav-item">
         <i data-lucide="timer"></i> <span>Focus</span>
-        <span class="nav-badge" id="focus-badge" style="display:none">●</span>
+        <span class="nav-badge" id="focus-badge" style="display:none">On</span>
       </a>
       <a href="analytics.html" class="nav-item">
         <i data-lucide="bar-chart-3"></i> <span>Analytics</span>
@@ -33,7 +33,7 @@
     </nav>
 
     <div class="sidebar-section">
-      <div class="sidebar-label">Player Stats</div>
+      <div class="sidebar-label">Progress</div>
       <div class="quick-stats">
         <div class="level-badge-container">
           <div class="level-badge-title">
@@ -44,7 +44,7 @@
         <div class="stat-row"><span>Completed</span><span class="stat-value" id="qs-completed">0/0</span></div>
         <div class="stat-bar"><div class="stat-bar-fill" id="qs-bar" style="width:0%"></div></div>
         <div class="stat-row" style="margin-top:4px"><span>Streak</span><span class="stat-value" id="qs-streak">0 days</span></div>
-        <div class="stat-row"><span>Today's Focus</span><span class="stat-value" id="qs-pomos">0 sessions</span></div>
+        <div class="stat-row"><span>Focus</span><span class="stat-value" id="qs-pomos">0</span></div>
       </div>
     </div>
   </aside>
@@ -78,130 +78,177 @@
   <div class="overlay-task" id="overlay-task-name">No task selected</div>
   <div class="overlay-timer" id="overlay-timer">25:00</div>
   <div class="overlay-label" id="overlay-label">FOCUS</div>
-  <div class="overlay-ambient">
-    <div class="ambient-dot"></div><div class="ambient-dot"></div><div class="ambient-dot"></div>
-  </div>
 </div>
 
 <div class="toast-container" id="toast-container"></div>
 
 <script src="shared.js"></script>
 <script>
-// ============================================================
-// TODAY VIEW — Goal-Driven & Frictionless Task Engine
-// ============================================================
-
-function renderTodayView(){
+function getFilteredTodayTasks(){
   var tasks=getTodayTasks();
   if(state.searchQuery){
-    tasks=tasks.filter(function(t){return t.title.toLowerCase().indexOf(state.searchQuery.toLowerCase())>=0});
+    var q=state.searchQuery.toLowerCase();
+    tasks=tasks.filter(function(t){return t.title.toLowerCase().indexOf(q)>=0});
   }
-  var frog=getFrogTask();
-  var html='';
+  return tasks;
+}
 
-  // 0. Today Summary — total / completed / completion ratio for today ONLY
-  var rawToday = state.tasks.filter(function(t){ return t.dueDate === today(); });
-  var rawDone = rawToday.filter(function(t){ return t.completed; }).length;
-  var rawTotal = rawToday.length;
-  var rawRate = rawTotal ? Math.round((rawDone / rawTotal) * 100) : 0;
-  html += '<div class="today-summary">'+
-    '<div class="today-summary-head"><div class="today-summary-title"><i data-lucide="sun" style="width:16px;height:16px"></i> Today\'s Progress</div><span class="today-summary-date">'+fmtDate(today())+'</span></div>'+
-    '<div class="stat-strip">'+
-      '<div class="stat-tile"><div class="tile-value" style="color:var(--primary)">'+rawTotal+'</div><div class="tile-label">Total Tasks</div></div>'+
-      '<div class="stat-tile"><div class="tile-value" style="color:var(--success)">'+rawDone+'</div><div class="tile-label">Completed</div></div>'+
-      '<div class="stat-tile"><div class="tile-value">'+rawRate+'%</div><div class="tile-label">Completion</div></div>'+
-    '</div>'+
-    '<div class="stat-bar" style="height:8px"><div class="stat-bar-fill" style="width:'+rawRate+'%;background:var(--success)"></div></div>'+
-  '</div>';
+function renderGoalOptions(){
+  return '<option value="">No goal</option>' + state.goals.map(function(g){
+    return '<option value="'+g.id+'"'+(state.activeGoalId===g.id?' selected':'')+'>'+escHtml(g.title)+'</option>';
+  }).join('');
+}
 
-  // 1. Goal Filter Bar
-  html += '<div class="goal-section">';
-  html += '<div class="goal-section-header"><div class="sidebar-label" style="padding:0">Filter by Goal</div>';
-  html += '<button class="btn btn-sm btn-secondary" onclick="promptNewGoal()"><i data-lucide="plus"></i> New Goal</button></div>';
-  html += '<div class="goal-pills">';
-  html += '<button class="goal-pill '+(state.activeGoalId===null?'active':'')+'" onclick="setActiveGoal(null)">🎯 All Goals</button>';
-  
-  state.goals.forEach(function(g){
-    var isSel = state.activeGoalId === g.id;
-    html += '<button class="goal-pill '+(isSel?'active':'')+'" onclick="setActiveGoal(\''+g.id+'\')" style="'+(isSel?'background:'+g.color+'22;border-color:'+g.color+';color:'+g.color:'')+'">';
-    html += '<span class="goal-dot" style="background:'+g.color+'"></span>';
-    html += escHtml(g.title);
-    html += '</button>';
-  });
-  html += '</div></div>';
+function shiftDateLocal(offset){
+  var d=new Date(today()+'T00:00:00');
+  d.setDate(d.getDate()+offset);
+  return toDateStr(d);
+}
 
-  // 2. Eat the Frog Priority Section
-  if(frog){
-    html+='<div class="frog-hero"><div class="frog-icon"><i data-lucide="zap"></i></div><div class="frog-info"><div class="frog-label">Eat the Frog (+50 XP)</div><div class="frog-title">'+escHtml(frog.title)+'</div><div class="frog-meta">'+(frog.subtasks&&frog.subtasks.length?frog.subtasks.filter(function(s){return s.completed}).length+'/'+frog.subtasks.length+' subtasks':'High-impact goal task for today')+'</div></div><div class="frog-actions"><button class="btn btn-sm btn-primary" onclick="completeTask(\''+frog.id+'\')">Complete</button><button class="btn btn-sm btn-secondary" onclick="clearFrog()">Unmark</button></div></div>';
-  }else{
-    html+='<div class="no-frog">⚡ No priority task set. Mark a task with the lightning bolt to make it today\'s primary focus (+50 XP).</div>';
+function renderWeekStrip(){
+  var html='<section class="week-strip">';
+  for(var i=0;i<7;i++){
+    var ds=shiftDateLocal(i);
+    var d=new Date(ds+'T00:00:00');
+    var tasks=getTasksForDate(ds);
+    var done=tasks.filter(function(t){return t.completed}).length;
+    var total=tasks.length;
+    var rate=total?Math.round((done/total)*100):0;
+    html+='<button class="week-day '+(ds===today()?'today':'')+'" onclick="window.location.href=\'calendar.html\'">'+
+      '<span>'+d.toLocaleDateString('en-US',{weekday:'short'})+'</span>'+
+      '<strong>'+d.getDate()+'</strong>'+
+      '<em>'+done+'/'+total+'</em>'+
+      '<i style="height:'+Math.max(4,rate)+'%"></i>'+
+    '</button>';
   }
-
-  // 3. Frictionless Task Creation Box
-  var qDate=state.selectedDate||today();
-  var goalOptions = '<option value="">🎯 Standalone Task</option>' + 
-    state.goals.map(function(g){ 
-      return '<option value="'+g.id+'"'+(state.activeGoalId===g.id?' selected':'')+'>🎯 '+escHtml(g.title)+'</option>'; 
-    }).join('');
-
-  html+='<div class="add-task-card">'+
-    '<div class="add-task-inline">'+
-      '<input type="text" placeholder="What action advances your goal today?" id="quick-add-input" onkeydown="if(event.key===\'Enter\')quickAddTask()">'+
-      '<button class="btn btn-primary" onclick="quickAddTask()"><i data-lucide="plus"></i> Quick Add (+20 XP)</button>'+
-    '</div>'+
-    '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+
-      '<select id="quick-add-goal" style="padding:6px 10px;border-radius:var(--radius-xs);border:1px solid var(--border);background:var(--bg-surface2);color:var(--text);font-size:12px;outline:none">'+goalOptions+'</select>'+
-      '<input type="time" id="quick-add-time" title="Start Time" style="padding:6px 10px;border-radius:var(--radius-xs);border:1px solid var(--border);background:var(--bg-surface2);color:var(--text);font-size:12px;outline:none">'+
-      '<input type="date" id="quick-add-date" value="'+qDate+'" min="'+today()+'" onchange="state.selectedDate=this.value" style="padding:6px 10px;border-radius:var(--radius-xs);border:1px solid var(--border);background:var(--bg-surface2);color:var(--text);font-size:12px;outline:none">'+
-      '<label style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--frog);cursor:pointer"><input type="checkbox" id="quick-add-frog" style="accent-color:var(--frog)"> Mark Priority (+50 XP)</label>'+
-    '</div>'+
-  '</div>';
-
-  // 4. Task Cards List
-  html+='<div class="task-list" id="today-task-list">';
-  if(tasks.length===0){
-    html+='<div class="empty-state"><i data-lucide="clipboard-list"></i><h3>No tasks found</h3><p>Add a quick task above or select a different goal filter.</p></div>';
-  }else{
-    tasks.forEach(function(t){html+=renderTaskCard(t)});
-  }
-  html+='</div>';
+  html+='</section>';
   return html;
 }
 
-// ---- ACTIONS ----
+function renderTodayView(){
+  var tasks=getFilteredTodayTasks();
+  var openTasks=tasks.filter(function(t){return !t.completed});
+  var doneTasks=tasks.filter(function(t){return t.completed});
+  var allToday=state.tasks.filter(function(t){return t.dueDate===today()});
+  var done=allToday.filter(function(t){return t.completed}).length;
+  var total=allToday.length;
+  var rate=total?Math.round((done/total)*100):0;
+  var priority=getFrogTask();
+  var qDate=state.selectedDate||today();
+  var html='';
+
+  html+='<section class="daily-board">'+
+    '<div class="daily-hero">'+
+      '<div><div class="daily-label">'+fmtDate(today())+'</div><h1>Plan today. Do one thing at a time.</h1></div>'+
+      '<div class="daily-score"><strong>'+done+'/'+total+'</strong><span>done</span></div>'+
+    '</div>'+
+    '<div class="daily-progress"><div style="width:'+rate+'%"></div></div>'+
+  '</section>';
+
+  html+=renderWeekStrip();
+
+  html+='<section class="workflow-grid">'+
+    '<div class="workflow-panel priority-panel">'+
+      '<div class="panel-kicker">Step 1</div>'+
+      '<h2>Pick the main task</h2>';
+  if(priority){
+    html+='<div class="priority-task">'+
+      '<div><span>Priority</span><strong>'+escHtml(priority.title)+'</strong></div>'+
+      '<div class="priority-actions"><button class="btn btn-primary" onclick="completeTask(\''+priority.id+'\')"><i data-lucide="check"></i> Done</button><button class="btn btn-secondary" onclick="clearFrog()">Clear</button></div>'+
+    '</div>';
+  }else{
+    html+='<p class="panel-note">Choose one task with the bolt button. This keeps today clear and focused.</p>';
+  }
+  html+='</div>'+
+    '<div class="workflow-panel add-panel">'+
+      '<div class="panel-kicker">Step 2</div>'+
+      '<h2>Add the next action</h2>'+
+      '<div class="quick-entry">'+
+        '<input type="text" placeholder="Write one clear action..." id="quick-add-input" onkeydown="if(event.key===\'Enter\')quickAddTask()">'+
+        '<button class="btn btn-primary" onclick="quickAddTask()"><i data-lucide="plus"></i> Add</button>'+
+      '</div>'+
+      '<div class="quick-options">'+
+        '<select id="quick-add-goal">'+renderGoalOptions()+'</select>'+
+        '<input type="time" id="quick-add-time" title="Start time">'+
+        '<input type="date" id="quick-add-date" value="'+qDate+'" min="'+today()+'" onchange="state.selectedDate=this.value">'+
+        '<label><input type="checkbox" id="quick-add-frog"> Priority</label>'+
+      '</div>'+
+    '</div>'+
+  '</section>';
+
+  html+='<section class="goal-section simple-goals">'+
+    '<div class="goal-section-header"><div class="sidebar-label" style="padding:0">View</div>'+
+    '<button class="btn btn-sm btn-secondary" onclick="promptNewGoal()"><i data-lucide="plus"></i> Goal</button></div>'+
+    '<div class="goal-pills">'+
+      '<button class="goal-pill '+(state.activeGoalId===null?'active':'')+'" onclick="setActiveGoal(null)">All</button>';
+  state.goals.forEach(function(g){
+    var isSel=state.activeGoalId===g.id;
+    html+='<span class="goal-manage-pill '+(isSel?'active':'')+'" style="'+(isSel?'background:'+g.color+'22;border-color:'+g.color+';color:'+g.color:'')+'">'+
+      '<button class="goal-name-btn" onclick="setActiveGoal(\''+g.id+'\')"><span class="goal-dot" style="background:'+g.color+'"></span>'+escHtml(g.title)+'</button>'+
+      '<button class="goal-mini-btn" onclick="editGoalPrompt(\''+g.id+'\')" title="Edit goal"><i data-lucide="pencil"></i></button>'+
+      '<button class="goal-mini-btn" onclick="deleteGoalPrompt(\''+g.id+'\')" title="Delete goal"><i data-lucide="trash-2"></i></button>'+
+    '</span>';
+  });
+  html+='</div></section>';
+
+  html+='<section class="task-section"><div class="section-title"><span>Step 3</span><h2>Do these today</h2></div><div class="task-list" id="today-task-list">';
+  if(openTasks.length===0){
+    html+='<div class="empty-state"><i data-lucide="clipboard-list"></i><h3>Your list is clear</h3><p>Add one action above, or enjoy the clean slate.</p></div>';
+  }else{
+    openTasks.forEach(function(t){html+=renderTaskCard(t)});
+  }
+  html+='</div></section>';
+
+  if(doneTasks.length){
+    html+='<section class="task-section completed-section"><div class="section-title"><span>Done</span><h2>Completed today</h2></div><div class="task-list">';
+    doneTasks.forEach(function(t){html+=renderTaskCard(t)});
+    html+='</div></section>';
+  }
+
+  return html;
+}
+
 function setActiveGoal(goalId){
-  state.activeGoalId = goalId;
+  state.activeGoalId=goalId;
   pageRender();
 }
 
 function promptNewGoal(){
-  var title = prompt("Enter new Goal title (e.g., 'Master Python', 'Fitness Goal'):");
-  if(!title||!title.trim()) return;
-  var colors = ['#6366F1', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#8B5CF6'];
-  var randomColor = colors[Math.floor(Math.random()*colors.length)];
-  addGoal(title, randomColor);
+  var title=prompt('New goal name:');
+  if(!title||!title.trim())return;
+  var colors=['#4F46E5','#059669','#D97706','#DC2626','#DB2777','#7C3AED'];
+  addGoal(title, colors[Math.floor(Math.random()*colors.length)]);
+}
+
+function editGoalPrompt(goalId){
+  var goal=state.goals.find(function(g){return g.id===goalId});
+  if(!goal)return;
+  var title=prompt('Edit goal name:', goal.title);
+  if(!title||!title.trim())return;
+  updateGoal(goalId,title,goal.color);
+}
+
+function deleteGoalPrompt(goalId){
+  var goal=state.goals.find(function(g){return g.id===goalId});
+  if(!goal)return;
+  if(!confirm('Delete "'+goal.title+'"? Tasks in this goal will become uncategorized.'))return;
+  deleteGoal(goalId);
 }
 
 function quickAddTask(){
   var input=document.getElementById('quick-add-input');
   if(!input||!input.value.trim())return;
-  
   var dateInput=document.getElementById('quick-add-date');
   var goalInput=document.getElementById('quick-add-goal');
   var timeInput=document.getElementById('quick-add-time');
-  var frogInput=document.getElementById('quick-add-frog');
-
+  var priorityInput=document.getElementById('quick-add-frog');
   var dueDate=dateInput&&dateInput.value?dateInput.value:today();
-  if(dueDate<today()){toast('Cannot schedule tasks in the past','error');return}
-  
   var startTime=timeInput&&timeInput.value?timeInput.value:null;
-  if(isTimeInPast(dueDate, startTime)){
-    toast('Cannot schedule a time in the past for today','error');
-    return;
-  }
+  var isPriority=priorityInput?priorityInput.checked:false;
 
-  var isFrog = frogInput ? frogInput.checked : false;
-  if(isFrog) state.tasks.forEach(function(x){x.eatTheFrog=false});
+  if(dueDate<today()){toast('Cannot schedule tasks in the past','error');return}
+  if(isTimeInPast(dueDate,startTime)){toast('Cannot schedule a past time for today','error');return}
+  if(isPriority)state.tasks.forEach(function(t){t.eatTheFrog=false});
 
   state.tasks.push({
     id:genId(),
@@ -215,40 +262,32 @@ function quickAddTask(){
     endTime:null,
     duration:null,
     eisenhower:null,
-    eatTheFrog:isFrog,
+    eatTheFrog:isPriority,
     todayTask:dueDate===today(),
     subtasks:[],
     tags:[],
-    pomodoroCount:0,
+    pomodoroCount:0
   });
 
-  input.value='';
-  if(timeInput) timeInput.value='';
-  if(frogInput) frogInput.checked=false;
-  
   persistTasks();
   updateStreak();
   pageRender();
-  toast('Task added successfully!','success');
+  toast('Task added','success');
 }
 
-// ---- PAGE GLUE ----
 function pageRender(){
   var content=document.getElementById('content');
   if(content)content.innerHTML=renderTodayView();
   renderQuickStats();
+  renderHeader();
   updateLucide();
-  
-  var cards=document.querySelectorAll('.task-card[draggable]');
-  cards.forEach(function(card){
-    card.addEventListener('dragstart',function(e){e.dataTransfer.setData('text/plain',card.dataset.taskId)});
-  });
 }
 
-// Export functions to window scope
 window.quickAddTask=quickAddTask;
 window.setActiveGoal=setActiveGoal;
 window.promptNewGoal=promptNewGoal;
+window.editGoalPrompt=editGoalPrompt;
+window.deleteGoalPrompt=deleteGoalPrompt;
 window.pageRender=pageRender;
 
 document.addEventListener('DOMContentLoaded',function(){

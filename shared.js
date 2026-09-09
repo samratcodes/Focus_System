@@ -33,6 +33,7 @@ const STORAGE_KEYS={
   pomoLog:'fs_pomo_log',
   streaks:'fs_streaks',
   pomoStatePersist:'fs_pomo_running',
+  focusAudio:'fs_focus_audio',
   goals:'fs_goals',
   xp:'fs_xp'
 };
@@ -48,6 +49,7 @@ let state={
   ]),
   xp: load(STORAGE_KEYS.xp, 0),
   pomoSettings: load(STORAGE_KEYS.pomoSettings, {work:25,shortBreak:5,longBreak:15,longBreakInterval:4}),
+  focusAudio: load(STORAGE_KEYS.focusAudio, {youtubeUrl:'',alarmEnabled:true}),
   pomoLog: load(STORAGE_KEYS.pomoLog, []),
   streaks: load(STORAGE_KEYS.streaks, []),
   selectedDate: today(),
@@ -63,6 +65,7 @@ function persistGoals(){save(STORAGE_KEYS.goals,state.goals)}
 function persistXP(){save(STORAGE_KEYS.xp,state.xp)}
 function persistPomoLog(){save(STORAGE_KEYS.pomoLog,state.pomoLog)}
 function persistStreaks(){save(STORAGE_KEYS.streaks,state.streaks)}
+function persistFocusAudio(){save(STORAGE_KEYS.focusAudio,state.focusAudio)}
 
 // ---- GAMIFICATION / LEVEL SYSTEM ----
 function getLevelInfo(xp){
@@ -179,12 +182,38 @@ function playChime(){
   }catch(e){}
 }
 
+function playAlarm(){
+  if(state.focusAudio && state.focusAudio.alarmEnabled === false) return;
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const pattern=[
+      {freq:880,start:0,dur:0.18},{freq:660,start:0.22,dur:0.18},
+      {freq:880,start:0.48,dur:0.18},{freq:660,start:0.70,dur:0.18},
+      {freq:1046,start:1.02,dur:0.28}
+    ];
+    pattern.forEach(function(note){
+      const osc=ctx.createOscillator();
+      const gain=ctx.createGain();
+      osc.type='square';
+      osc.frequency.value=note.freq;
+      gain.gain.setValueAtTime(0.001,ctx.currentTime+note.start);
+      gain.gain.exponentialRampToValueAtTime(0.18,ctx.currentTime+note.start+0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+note.start+note.dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime+note.start);
+      osc.stop(ctx.currentTime+note.start+note.dur+0.02);
+    });
+  }catch(e){}
+}
+
 function tickPomo(){
   if(!pomoState.running)return;
   pomoState.secondsLeft--;
   if(pomoState.secondsLeft<=0){
     playChime();
     if(pomoState.mode==='work'){
+      playAlarm();
       pomoState.sessionCount++;
       logPomodoroSession();
       addXP(25, 'Focus Session Complete');
@@ -270,6 +299,15 @@ function addGoal(title, color){
   persistGoals();
   if(typeof pageRender==='function')pageRender();
   toast('New Goal created!','success');
+}
+function updateGoal(goalId, title, color){
+  const goal=state.goals.find(g=>g.id===goalId);
+  if(!goal || !title || !title.trim())return;
+  goal.title=title.trim();
+  if(color)goal.color=color;
+  persistGoals();
+  if(typeof pageRender==='function')pageRender();
+  toast('Goal updated','success');
 }
 function deleteGoal(goalId){
   state.goals=state.goals.filter(g=>g.id!==goalId);
@@ -420,10 +458,11 @@ function renderTaskCard(t){
 function toggleComplete(id){
   var t=state.tasks.find(function(t){return t.id===id});
   if(t){
+    var wasPriority=!!t.eatTheFrog;
     t.completed=!t.completed;
     if(t.completed){
       t.eatTheFrog=false;
-      const xpEarned = t.eatTheFrog ? 50 : 20;
+      const xpEarned = wasPriority ? 50 : 20;
       addXP(xpEarned, 'Task Completed');
     }
     persistTasks();
@@ -725,7 +764,7 @@ window.escHtml=escHtml; window.toast=toast; window.updateLucide=updateLucide;
 window.getTasksForDate=getTasksForDate; window.getTodayTasks=getTodayTasks; window.getFrogTask=getFrogTask;
 window.getCompletionRate=getCompletionRate; window.getStreakCount=getStreakCount; window.getStreakDays=getStreakDays;
 window.updateStreak=updateStreak; window.persistTasks=persistTasks; window.persistPomoLog=persistPomoLog;
-window.persistStreaks=persistStreaks; window.toggleComplete=toggleComplete; window.completeTask=completeTask;
+window.persistStreaks=persistStreaks; window.persistFocusAudio=persistFocusAudio; window.toggleComplete=toggleComplete; window.completeTask=completeTask;
 window.toggleFrog=toggleFrog; window.clearFrog=clearFrog; window.deleteTask=deleteTask;
 window.toggleSubtask=toggleSubtask; window.addSubtask=addSubtask; window.deleteSubtask=deleteSubtask;
 window.openTaskEditor=openTaskEditor; window.selectEisenhower=selectEisenhower;
@@ -734,12 +773,13 @@ window.saveTaskFromModal=saveTaskFromModal; window.deleteTaskFromModal=deleteTas
 window.closeModal=closeModal; window.updateModalTimeMin=updateModalTimeMin;
 window.startPomo=startPomo; window.pausePomo=pausePomo; window.resetPomo=resetPomo;
 window.enterFocusOverlay=enterFocusOverlay; window.exitFocusOverlay=exitFocusOverlay;
-window.renderOverlayTimer=renderOverlayTimer; window.renderPomoDisplay=renderPomoDisplay;
+window.renderOverlayTimer=renderOverlayTimer;
+window.renderPomoDisplay=typeof renderPomoDisplay==='function'?renderPomoDisplay:function(){};
 window.renderQuickStats=renderQuickStats; window.renderHeader=renderHeader;
 window.renderTaskCard=renderTaskCard; window.commonInit=commonInit;
 window.STORAGE_KEYS=STORAGE_KEYS; window.state=state; window.pomoState=pomoState;
 window.load=load; window.save=save;
 window.persistPomoState=persistPomoState; window.restorePomoState=restorePomoState;
 window.tickPomo=tickPomo;
-window.addGoal=addGoal; window.deleteGoal=deleteGoal; window.getGoalProgress=getGoalProgress;
-window.addXP=addXP; window.getLevelInfo=getLevelInfo;
+window.addGoal=addGoal; window.updateGoal=updateGoal; window.deleteGoal=deleteGoal; window.getGoalProgress=getGoalProgress;
+window.addXP=addXP; window.getLevelInfo=getLevelInfo; window.playAlarm=playAlarm;

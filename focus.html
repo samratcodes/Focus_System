@@ -3,92 +3,62 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Focus System — Focus</title>
+<title>Focus System - Focus</title>
 <link rel="stylesheet" href="styles.css">
 <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-
 <div class="app">
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-      <i data-lucide="target"></i>
-      <span>Focus System</span>
-    </div>
+    <div class="sidebar-brand"><i data-lucide="target"></i><span>Focus System</span></div>
     <nav class="sidebar-nav">
-      <a href="index.html" class="nav-item">
-        <i data-lucide="sun"></i> <span>Today</span>
-        <span class="nav-badge" id="today-count">0</span>
-      </a>
-      <a href="calendar.html" class="nav-item">
-        <i data-lucide="calendar"></i> <span>Calendar</span>
-      </a>
-      <a href="focus.html" class="nav-item active">
-        <i data-lucide="timer"></i> <span>Focus</span>
-        <span class="nav-badge" id="focus-badge" style="display:none">●</span>
-      </a>
-      <a href="analytics.html" class="nav-item">
-        <i data-lucide="bar-chart-3"></i> <span>Analytics</span>
-      </a>
+      <a href="index.html" class="nav-item"><i data-lucide="sun"></i> <span>Today</span><span class="nav-badge" id="today-count">0</span></a>
+      <a href="calendar.html" class="nav-item"><i data-lucide="calendar"></i> <span>Calendar</span></a>
+      <a href="focus.html" class="nav-item active"><i data-lucide="timer"></i> <span>Focus</span><span class="nav-badge" id="focus-badge" style="display:none">On</span></a>
+      <a href="analytics.html" class="nav-item"><i data-lucide="bar-chart-3"></i> <span>Analytics</span></a>
     </nav>
-
     <div class="sidebar-section">
-      <div class="sidebar-label">Player Stats</div>
+      <div class="sidebar-label">Progress</div>
       <div class="quick-stats">
-        <div class="level-badge-container">
-          <div class="level-badge-title">
-            <i data-lucide="trophy" style="width:14px;height:14px"></i>
-            <span id="qs-level">Lvl 1 (0/100 XP)</span>
-          </div>
-        </div>
+        <div class="level-badge-container"><div class="level-badge-title"><i data-lucide="trophy" style="width:14px;height:14px"></i><span id="qs-level">Lvl 1 (0/100 XP)</span></div></div>
         <div class="stat-row"><span>Completed</span><span class="stat-value" id="qs-completed">0/0</span></div>
         <div class="stat-bar"><div class="stat-bar-fill" id="qs-bar" style="width:0%"></div></div>
         <div class="stat-row" style="margin-top:4px"><span>Streak</span><span class="stat-value" id="qs-streak">0 days</span></div>
-        <div class="stat-row"><span>Today's Focus</span><span class="stat-value" id="qs-pomos">0 sessions</span></div>
+        <div class="stat-row"><span>Focus</span><span class="stat-value" id="qs-pomos">0</span></div>
       </div>
     </div>
   </aside>
-
   <main class="main">
     <header class="header">
-      <div class="header-greeting">
-        <h2 id="greeting">Good morning</h2>
-        <span id="header-date"></span>
-      </div>
-      <div class="header-search">
-        <i data-lucide="search"></i>
-        <input type="text" placeholder="Search tasks..." id="search-input">
-      </div>
-      <div class="completion-bar">
-        <div class="bar-track"><div class="bar-fill" id="header-bar-fill" style="width:0%"></div></div>
-        <span class="bar-text" id="header-bar-text">0%</span>
-      </div>
+      <div class="header-greeting"><h2 id="greeting">Good morning</h2><span id="header-date"></span></div>
+      <div class="header-search"><i data-lucide="search"></i><input type="text" placeholder="Search tasks..." id="search-input"></div>
+      <div class="completion-bar"><div class="bar-track"><div class="bar-fill" id="header-bar-fill" style="width:0%"></div></div><span class="bar-text" id="header-bar-text">0%</span></div>
     </header>
     <div class="content" id="content"></div>
   </main>
 </div>
-
-<div class="modal-overlay" id="task-modal-overlay">
-  <div class="modal" id="task-modal"></div>
-</div>
-
-<div class="focus-overlay" id="focus-overlay">
-  <button class="overlay-exit" id="overlay-exit">Exit Focus Mode</button>
-  <div class="overlay-task" id="overlay-task-name">No task selected</div>
-  <div class="overlay-timer" id="overlay-timer">25:00</div>
-  <div class="overlay-label" id="overlay-label">FOCUS</div>
-  <div class="overlay-ambient">
-    <div class="ambient-dot"></div><div class="ambient-dot"></div><div class="ambient-dot"></div>
-  </div>
-</div>
-
+<div class="modal-overlay" id="task-modal-overlay"><div class="modal" id="task-modal"></div></div>
+<div class="focus-overlay" id="focus-overlay"><button class="overlay-exit" id="overlay-exit">Exit Focus Mode</button><div class="overlay-task" id="overlay-task-name">No task selected</div><div class="overlay-timer" id="overlay-timer">25:00</div><div class="overlay-label" id="overlay-label">FOCUS</div><div class="overlay-music" id="overlay-music"></div></div>
 <div class="toast-container" id="toast-container"></div>
-
 <script src="shared.js"></script>
 <script>
-// ============================================================
-// FOCUS VIEW — Gamified Pomodoro Engine
-// ============================================================
+function youtubeId(url){
+  if(!url)return '';
+  var match=String(url).match(/(?:youtube\.com\/(?:watch\?v=|embed\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+  return match?match[1]:'';
+}
+
+function youtubeSrc(autoplay){
+  var id=youtubeId(state.focusAudio&&state.focusAudio.youtubeUrl);
+  if(!id)return '';
+  return 'https://www.youtube.com/embed/'+id+'?rel=0&playsinline=1&autoplay='+(autoplay?1:0)+'&loop=1&playlist='+id;
+}
+
+function renderYoutubeFrame(autoplay){
+  var src=youtubeSrc(autoplay);
+  if(!src)return '<div class="music-empty">Save a YouTube link to use background music.</div>';
+  return '<iframe title="Focus background music" src="'+src+'" allow="autoplay; encrypted-media" allowfullscreen></iframe>';
+}
 
 function renderFocusView(){
   var tasks=getTodayTasks().filter(function(t){return !t.completed});
@@ -98,112 +68,102 @@ function renderFocusView(){
   var progress=pomoState.totalSeconds>0?((pomoState.totalSeconds-pomoState.secondsLeft)/pomoState.totalSeconds):0;
   var circumference=2*Math.PI*115;
   var offset=circumference*(1-progress);
-
-  var taskOptions = tasks.map(function(t){
-    var g = t.goalId ? state.goals.find(function(g){return g.id===t.goalId}) : null;
-    var goalName = g ? ' [' + g.title + ']' : '';
-    return '<option value="'+t.id+'"'+(pomoState.attachedTaskId===t.id?' selected':'')+'>'+escHtml(t.title)+goalName+'</option>';
+  var taskOptions=tasks.map(function(t){
+    var g=t.goalId?state.goals.find(function(g){return g.id===t.goalId}):null;
+    return '<option value="'+t.id+'"'+(pomoState.attachedTaskId===t.id?' selected':'')+'>'+escHtml(t.title)+(g?' ['+escHtml(g.title)+']':'')+'</option>';
   }).join('');
+  var logs=state.pomoLog.filter(function(l){return l.date===today()});
 
-  var html='<div class="focus-layout">'+
+  return '<div class="focus-layout">'+
     '<div class="focus-timer-area">'+
-      '<div class="timer-ring">'+
-        '<svg width="260" height="260" viewBox="0 0 260 260">'+
-          '<circle class="ring-bg" cx="130" cy="130" r="115"></circle>'+
-          '<circle class="ring-progress'+(pomoState.mode!=='work'?' break':'')+'" cx="130" cy="130" r="115" stroke-dasharray="'+circumference+'" stroke-dashoffset="'+offset+'"></circle>'+
-        '</svg>'+
-        '<div class="timer-time" id="timer-display">'+timeStr+'</div>'+
-        '<div class="timer-label" style="color:'+(pomoState.mode==='work'?'var(--primary)':'var(--success)')+'">'+(pomoState.mode==='work'?'FOCUS':pomoState.mode==='shortBreak'?'SHORT BREAK':'LONG BREAK')+'</div>'+
-      '</div>'+
-      '<div class="timer-controls" id="timer-controls">'+
-        (pomoState.running?'<button class="btn btn-secondary" id="btn-pause-pomo" onclick="pausePomo()"><i data-lucide="pause"></i> Pause</button>':'<button class="btn btn-primary" id="btn-start-pomo" onclick="startPomo()"><i data-lucide="play"></i> Start (+25 XP)</button>')+
-        '<button class="btn btn-secondary" onclick="resetPomo();pageRender()"><i data-lucide="rotate-ccw"></i> Reset</button>'+
-      '</div>'+
+      '<div class="timer-ring"><svg width="260" height="260" viewBox="0 0 260 260"><circle class="ring-bg" cx="130" cy="130" r="115"></circle><circle class="ring-progress'+(pomoState.mode!=='work'?' break':'')+'" cx="130" cy="130" r="115" stroke-dasharray="'+circumference+'" stroke-dashoffset="'+offset+'"></circle></svg><div class="timer-time" id="timer-display">'+timeStr+'</div><div class="timer-label" style="color:'+(pomoState.mode==='work'?'var(--primary)':'var(--success)')+'">'+(pomoState.mode==='work'?'FOCUS':pomoState.mode==='shortBreak'?'SHORT BREAK':'LONG BREAK')+'</div></div>'+
+      '<div class="timer-controls" id="timer-controls">'+renderTimerButtons()+'</div>'+
       '<div class="timer-sessions">Sessions completed: <span>'+pomoState.sessionCount+'</span></div>'+
-      '<button class="btn btn-secondary" onclick="enterFocusOverlay()" style="margin-top:8px"><i data-lucide="maximize-2"></i> Enter Fullscreen Focus</button>'+
+      '<button class="btn btn-secondary" onclick="enterFocusOverlay()" style="margin-top:8px"><i data-lucide="maximize-2"></i> Fullscreen Focus</button>'+
     '</div>'+
     '<div class="focus-sidebar">'+
-      '<div class="focus-card"><h4>Attach Task (+25 XP)</h4><select id="focus-task-select" onchange="attachTaskToPomo(this.value)"><option value="">— None —</option>'+taskOptions+'</select></div>'+
-      '<div class="focus-card"><h4>Timer Settings (min)</h4>'+
-        '<div class="settings-row"><label>Work</label><input type="number" value="'+state.pomoSettings.work+'" min="1" max="120" id="setting-work" onchange="updatePomoSetting(\'work\',this.value)"></div>'+
-        '<div class="settings-row"><label>Short Break</label><input type="number" value="'+state.pomoSettings.shortBreak+'" min="1" max="60" id="setting-short" onchange="updatePomoSetting(\'shortBreak\',this.value)"></div>'+
-        '<div class="settings-row"><label>Long Break</label><input type="number" value="'+state.pomoSettings.longBreak+'" min="1" max="60" id="setting-long" onchange="updatePomoSetting(\'longBreak\',this.value)"></div>'+
-        '<div class="settings-row"><label>Interval</label><input type="number" value="'+state.pomoSettings.longBreakInterval+'" min="1" max="10" id="setting-interval" onchange="updatePomoSetting(\'longBreakInterval\',this.value)"></div>'+
-      '</div>'+
-      '<div class="focus-card"><h4>Today\'s Sessions</h4>'+
-        '<div class="focus-log">'+(state.pomoLog.filter(function(l){return l.date===today()}).length===0?'<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:10px">No sessions completed today</div>':'')+
-        state.pomoLog.filter(function(l){return l.date===today()}).slice(-10).reverse().map(function(l){
-          var t=l.taskId?state.tasks.find(function(t){return t.id===l.taskId}):null;
-          return '<div class="focus-log-entry"><span>'+(t?escHtml(t.title.slice(0,25)):'Untracked Session')+'</span><span>'+((l.sessions||1))+'</span></div>';
-        }).join('')+
-        '</div>'+
-      '</div>'+
+      '<div class="focus-card"><h4>Attach task</h4><select id="focus-task-select" onchange="attachTaskToPomo(this.value)"><option value="">None</option>'+taskOptions+'</select></div>'+
+      '<div class="focus-card music-card"><h4>Background music</h4><div class="music-input-row"><input type="url" id="youtube-url" placeholder="Paste YouTube link" value="'+escHtml((state.focusAudio&&state.focusAudio.youtubeUrl)||'')+'"><button class="btn btn-sm btn-primary" onclick="saveFocusMusic()">Save</button></div><div class="music-actions"><button class="btn btn-sm btn-secondary" onclick="playFocusMusic()"><i data-lucide="music"></i> Play</button><button class="btn btn-sm btn-secondary" onclick="stopFocusMusic()"><i data-lucide="square"></i> Stop</button><label><input type="checkbox" id="alarm-enabled" '+(!state.focusAudio||state.focusAudio.alarmEnabled!==false?'checked':'')+' onchange="toggleAlarm(this.checked)"> Alarm</label></div><div class="youtube-frame-wrap" id="youtube-frame-wrap">'+renderYoutubeFrame(false)+'</div></div>'+
+      '<div class="focus-card"><h4>Timer settings</h4><div class="settings-row"><label>Work</label><input type="number" value="'+state.pomoSettings.work+'" min="1" max="120" onchange="updatePomoSetting(\'work\',this.value)"></div><div class="settings-row"><label>Short</label><input type="number" value="'+state.pomoSettings.shortBreak+'" min="1" max="60" onchange="updatePomoSetting(\'shortBreak\',this.value)"></div><div class="settings-row"><label>Long</label><input type="number" value="'+state.pomoSettings.longBreak+'" min="1" max="60" onchange="updatePomoSetting(\'longBreak\',this.value)"></div><div class="settings-row"><label>Interval</label><input type="number" value="'+state.pomoSettings.longBreakInterval+'" min="1" max="10" onchange="updatePomoSetting(\'longBreakInterval\',this.value)"></div></div>'+
+      '<div class="focus-card"><h4>Today sessions</h4><div class="focus-log">'+(logs.length?logs.slice(-10).reverse().map(function(l){var t=l.taskId?state.tasks.find(function(t){return t.id===l.taskId}):null;return '<div class="focus-log-entry"><span>'+(t?escHtml(t.title.slice(0,25)):'Untracked')+'</span><span>'+(l.sessions||1)+'</span></div>';}).join(''):'<div class="music-empty">No sessions yet today.</div>')+'</div></div>'+
     '</div>'+
   '</div>';
-  return html;
+}
+
+function renderTimerButtons(){
+  if(pomoState.running)return '<button class="btn btn-secondary" onclick="pauseFocusSession()"><i data-lucide="pause"></i> Pause</button><button class="btn btn-secondary" onclick="resetPomo();stopFocusMusic();pageRender()"><i data-lucide="rotate-ccw"></i> Reset</button>';
+  return '<button class="btn btn-primary" onclick="startFocusSession()"><i data-lucide="play"></i> Start</button><button class="btn btn-secondary" onclick="resetPomo();stopFocusMusic();pageRender()"><i data-lucide="rotate-ccw"></i> Reset</button>';
 }
 
 function renderPomoDisplay(){
   var timerDisplay=document.getElementById('timer-display');
-  if(!timerDisplay)return;
-  var mins=Math.floor(pomoState.secondsLeft/60);
-  var secs=pomoState.secondsLeft%60;
-  timerDisplay.textContent=String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0');
-
+  if(timerDisplay){
+    var mins=Math.floor(pomoState.secondsLeft/60), secs=pomoState.secondsLeft%60;
+    timerDisplay.textContent=String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0');
+  }
   var circle=document.querySelector('.ring-progress');
   if(circle){
     var progress=pomoState.totalSeconds>0?((pomoState.totalSeconds-pomoState.secondsLeft)/pomoState.totalSeconds):0;
     var circumference=2*Math.PI*115;
     circle.style.strokeDashoffset=circumference*(1-progress);
     circle.setAttribute('stroke-dashoffset',circumference*(1-progress));
-    if(pomoState.mode!=='work')circle.classList.add('break');else circle.classList.remove('break');
+    circle.classList.toggle('break',pomoState.mode!=='work');
   }
-
   var label=document.querySelector('.timer-label');
   if(label){
     label.textContent=pomoState.mode==='work'?'FOCUS':pomoState.mode==='shortBreak'?'SHORT BREAK':'LONG BREAK';
     label.style.color=pomoState.mode==='work'?'var(--primary)':'var(--success)';
   }
-
   var sessions=document.querySelector('.timer-sessions span');
   if(sessions)sessions.textContent=pomoState.sessionCount;
-
   var controls=document.getElementById('timer-controls');
-  if(controls){
-    if(pomoState.running){
-      controls.innerHTML='<button class="btn btn-secondary" id="btn-pause-pomo" onclick="pausePomo()"><i data-lucide="pause"></i> Pause</button><button class="btn btn-secondary" onclick="resetPomo();pageRender()"><i data-lucide="rotate-ccw"></i> Reset</button>';
-    }else{
-      controls.innerHTML='<button class="btn btn-primary" id="btn-start-pomo" onclick="startPomo()"><i data-lucide="play"></i> Start (+25 XP)</button><button class="btn btn-secondary" onclick="resetPomo();pageRender()"><i data-lucide="rotate-ccw"></i> Reset</button>';
-    }
-    updateLucide();
-  }
+  if(controls){controls.innerHTML=renderTimerButtons();updateLucide();}
   renderQuickStats();
 }
 
-function enterFocusOverlayLocal(){
-  var overlay=document.getElementById('focus-overlay');
-  if(!overlay)return;
-  overlay.classList.add('active');
-  var t=pomoState.attachedTaskId?state.tasks.find(function(t){return t.id===pomoState.attachedTaskId}):null;
-  var ot=document.getElementById('overlay-task-name');
-  if(ot)ot.textContent=t?t.title:'Deep Work Focus Session';
-  renderOverlayTimer();
-  var ol=document.getElementById('overlay-label');
-  if(ol)ol.textContent=pomoState.mode==='work'?'FOCUS':pomoState.mode==='shortBreak'?'SHORT BREAK':'LONG BREAK';
+function saveFocusMusic(){
+  var input=document.getElementById('youtube-url');
+  var url=input?input.value.trim():'';
+  if(url && !youtubeId(url)){toast('Paste a valid YouTube link','error');return}
+  state.focusAudio.youtubeUrl=url;
+  persistFocusAudio();
+  stopFocusMusic();
+  var wrap=document.getElementById('youtube-frame-wrap');
+  if(wrap)wrap.innerHTML=renderYoutubeFrame(false);
+  toast('Music saved','success');
 }
 
-function renderOverlayTimerLocal(){
-  var overlay=document.getElementById('focus-overlay');
-  if(!overlay||!overlay.classList.contains('active'))return;
-  var mins=Math.floor(pomoState.secondsLeft/60);
-  var secs=pomoState.secondsLeft%60;
-  var ot=document.getElementById('overlay-timer');
-  if(ot)ot.textContent=String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0');
-  var ol=document.getElementById('overlay-label');
-  if(ol)ol.textContent=pomoState.mode==='work'?'FOCUS':pomoState.mode==='shortBreak'?'SHORT BREAK':'LONG BREAK';
+function playFocusMusic(){
+  saveFocusMusic();
+  var src=youtubeSrc(true);
+  var wrap=document.getElementById('youtube-frame-wrap');
+  if(wrap)wrap.innerHTML=src?'<iframe title="Focus background music" src="'+src+'" allow="autoplay; encrypted-media" allowfullscreen></iframe>':renderYoutubeFrame(false);
 }
 
-function attachTaskToPomo(taskId){pomoState.attachedTaskId=taskId||null}
+function stopFocusMusic(){
+  var wrap=document.getElementById('youtube-frame-wrap');
+  if(wrap)wrap.innerHTML=renderYoutubeFrame(false);
+}
+
+function toggleAlarm(enabled){
+  state.focusAudio.alarmEnabled=!!enabled;
+  persistFocusAudio();
+}
+
+function startFocusSession(){
+  startPomo();
+  playFocusMusic();
+}
+
+function pauseFocusSession(){
+  pausePomo();
+  stopFocusMusic();
+}
+
+function attachTaskToPomo(taskId){
+  pomoState.attachedTaskId=taskId||null;
+  persistPomoState();
+}
 
 function updatePomoSetting(key,val){
   var v=parseInt(val);
@@ -218,16 +178,53 @@ function updatePomoSetting(key,val){
   }
 }
 
+function enterFocusOverlayLocal(){
+  var overlay=document.getElementById('focus-overlay');
+  if(!overlay)return;
+  overlay.classList.add('active');
+  var t=pomoState.attachedTaskId?state.tasks.find(function(t){return t.id===pomoState.attachedTaskId}):null;
+  var ot=document.getElementById('overlay-task-name');
+  if(ot)ot.textContent=t?t.title:'Deep Work Focus Session';
+  var om=document.getElementById('overlay-music');
+  if(om)om.innerHTML=renderYoutubeFrame(true);
+  renderOverlayTimerLocal();
+}
+
+function renderOverlayTimerLocal(){
+  var overlay=document.getElementById('focus-overlay');
+  if(!overlay||!overlay.classList.contains('active'))return;
+  var mins=Math.floor(pomoState.secondsLeft/60), secs=pomoState.secondsLeft%60;
+  var ot=document.getElementById('overlay-timer');
+  if(ot)ot.textContent=String(mins).padStart(2,'0')+':'+String(secs).padStart(2,'0');
+  var ol=document.getElementById('overlay-label');
+  if(ol)ol.textContent=pomoState.mode==='work'?'FOCUS':pomoState.mode==='shortBreak'?'SHORT BREAK':'LONG BREAK';
+}
+
+function exitFocusOverlayLocal(){
+  var overlay=document.getElementById('focus-overlay');
+  if(overlay)overlay.classList.remove('active');
+  var om=document.getElementById('overlay-music');
+  if(om)om.innerHTML='';
+}
+
 function pageRender(){
   var content=document.getElementById('content');
   if(content)content.innerHTML=renderFocusView();
   renderQuickStats();
+  renderHeader();
   updateLucide();
 }
 
 window.renderPomoDisplay=renderPomoDisplay;
 window.renderOverlayTimer=renderOverlayTimerLocal;
 window.enterFocusOverlay=enterFocusOverlayLocal;
+window.exitFocusOverlay=exitFocusOverlayLocal;
+window.saveFocusMusic=saveFocusMusic;
+window.playFocusMusic=playFocusMusic;
+window.stopFocusMusic=stopFocusMusic;
+window.toggleAlarm=toggleAlarm;
+window.startFocusSession=startFocusSession;
+window.pauseFocusSession=pauseFocusSession;
 window.attachTaskToPomo=attachTaskToPomo;
 window.updatePomoSetting=updatePomoSetting;
 window.pageRender=pageRender;

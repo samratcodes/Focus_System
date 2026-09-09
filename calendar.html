@@ -3,508 +3,231 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Focus System — Calendar</title>
+<title>Focus System - Calendar</title>
 <link rel="stylesheet" href="styles.css">
 <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-
 <div class="app">
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-      <i data-lucide="target"></i>
-      <span>Focus System</span>
-    </div>
+    <div class="sidebar-brand"><i data-lucide="target"></i><span>Focus System</span></div>
     <nav class="sidebar-nav">
-      <a href="index.html" class="nav-item">
-        <i data-lucide="sun"></i> <span>Today</span>
-        <span class="nav-badge" id="today-count">0</span>
-      </a>
-      <a href="calendar.html" class="nav-item active">
-        <i data-lucide="calendar"></i> <span>Calendar</span>
-      </a>
-      <a href="focus.html" class="nav-item">
-        <i data-lucide="timer"></i> <span>Focus</span>
-        <span class="nav-badge" id="focus-badge" style="display:none">●</span>
-      </a>
-      <a href="analytics.html" class="nav-item">
-        <i data-lucide="bar-chart-3"></i> <span>Analytics</span>
-      </a>
+      <a href="index.html" class="nav-item"><i data-lucide="sun"></i> <span>Today</span><span class="nav-badge" id="today-count">0</span></a>
+      <a href="calendar.html" class="nav-item active"><i data-lucide="calendar"></i> <span>Calendar</span></a>
+      <a href="focus.html" class="nav-item"><i data-lucide="timer"></i> <span>Focus</span><span class="nav-badge" id="focus-badge" style="display:none">On</span></a>
+      <a href="analytics.html" class="nav-item"><i data-lucide="bar-chart-3"></i> <span>Analytics</span></a>
     </nav>
-
     <div class="sidebar-section">
-      <div class="sidebar-label">Player Stats</div>
+      <div class="sidebar-label">Progress</div>
       <div class="quick-stats">
-        <div class="level-badge-container">
-          <div class="level-badge-title">
-            <i data-lucide="trophy" style="width:14px;height:14px"></i>
-            <span id="qs-level">Lvl 1 (0/100 XP)</span>
-          </div>
-        </div>
+        <div class="level-badge-container"><div class="level-badge-title"><i data-lucide="trophy" style="width:14px;height:14px"></i><span id="qs-level">Lvl 1 (0/100 XP)</span></div></div>
         <div class="stat-row"><span>Completed</span><span class="stat-value" id="qs-completed">0/0</span></div>
         <div class="stat-bar"><div class="stat-bar-fill" id="qs-bar" style="width:0%"></div></div>
         <div class="stat-row" style="margin-top:4px"><span>Streak</span><span class="stat-value" id="qs-streak">0 days</span></div>
-        <div class="stat-row"><span>Today's Focus</span><span class="stat-value" id="qs-pomos">0 sessions</span></div>
+        <div class="stat-row"><span>Focus</span><span class="stat-value" id="qs-pomos">0</span></div>
       </div>
     </div>
   </aside>
 
   <main class="main">
     <header class="header">
-      <div class="header-greeting">
-        <h2 id="greeting">Good morning</h2>
-        <span id="header-date"></span>
-      </div>
-      <div class="header-search">
-        <i data-lucide="search"></i>
-        <input type="text" placeholder="Search tasks..." id="search-input">
-      </div>
-      <div class="completion-bar">
-        <div class="bar-track"><div class="bar-fill" id="header-bar-fill" style="width:0%"></div></div>
-        <span class="bar-text" id="header-bar-text">0%</span>
-      </div>
+      <div class="header-greeting"><h2 id="greeting">Good morning</h2><span id="header-date"></span></div>
+      <div class="header-search"><i data-lucide="search"></i><input type="text" placeholder="Search tasks..." id="search-input"></div>
+      <div class="completion-bar"><div class="bar-track"><div class="bar-fill" id="header-bar-fill" style="width:0%"></div></div><span class="bar-text" id="header-bar-text">0%</span></div>
     </header>
-    <div class="content" id="content"></div>
+    <div class="content calendar-content" id="content"></div>
   </main>
 </div>
 
-<div class="modal-overlay" id="task-modal-overlay">
-  <div class="modal" id="task-modal"></div>
-</div>
-
-<div class="focus-overlay" id="focus-overlay">
-  <button class="overlay-exit" id="overlay-exit">Exit Focus Mode</button>
-  <div class="overlay-task" id="overlay-task-name">No task selected</div>
-  <div class="overlay-timer" id="overlay-timer">25:00</div>
-  <div class="overlay-label" id="overlay-label">FOCUS</div>
-  <div class="overlay-ambient">
-    <div class="ambient-dot"></div><div class="ambient-dot"></div><div class="ambient-dot"></div>
-  </div>
-</div>
-
+<div class="modal-overlay" id="task-modal-overlay"><div class="modal" id="task-modal"></div></div>
+<div class="focus-overlay" id="focus-overlay"><button class="overlay-exit" id="overlay-exit">Exit Focus Mode</button><div class="overlay-task" id="overlay-task-name">No task selected</div><div class="overlay-timer" id="overlay-timer">25:00</div><div class="overlay-label" id="overlay-label">FOCUS</div></div>
 <div class="toast-container" id="toast-container"></div>
 
 <script src="shared.js"></script>
 <script>
-// ============================================================
-// CALENDAR VIEW — Clean, Streamlined Goal & Schedule Engine
-// ============================================================
-
-function getTomorrowStr(){
-  var d = new Date();
-  d.setDate(d.getDate() + 1);
-  return toDateStr(d);
-}
-
-function shiftDate(iso, days){
-  var parts = String(iso).split('-');
-  var d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-  d.setDate(d.getDate() + days);
-  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+function monthName(month){
+  return ['January','February','March','April','May','June','July','August','September','October','November','December'][month];
 }
 
 function syncCalendarToDate(dateStr){
-  var d = new Date(dateStr + 'T00:00:00');
-  state.calendarMonth = d.getMonth();
-  state.calendarYear = d.getFullYear();
+  var d=new Date(dateStr+'T00:00:00');
+  state.calendarMonth=d.getMonth();
+  state.calendarYear=d.getFullYear();
 }
 
 function renderCalendarView(){
-  var cm = state.calendarMonth, cy = state.calendarYear;
-  var selDate = state.selectedDate || today();
-  var monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  var toolbarTitle = monthNames[cm] + ' ' + cy;
+  if(!state.selectedDate)state.selectedDate=today();
+  var cm=state.calendarMonth;
+  var cy=state.calendarYear;
+  var title=monthName(cm)+' '+cy;
+  var selectedTasks=getTasksForDate(state.selectedDate);
+  var activeTasks=selectedTasks.filter(function(t){return !t.completed});
+  var completedTasks=selectedTasks.filter(function(t){return t.completed});
+  var selectedIsPast=state.selectedDate<today();
+  var done=completedTasks.length;
+  var total=selectedTasks.length;
+  var rate=total?Math.round(done/total*100):0;
 
-  var html = '<div class="calendar-toolbar" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">';
-  html += '<div style="display:flex;align-items:center;gap:8px">';
-  html += '<button class="btn btn-sm btn-secondary" onclick="navMonth(-1)" title="Previous month"><i data-lucide="chevron-left"></i></button>';
-  html += '<h3 style="font-size:20px;font-weight:800;min-width:150px;text-align:center;margin:0">'+toolbarTitle+'</h3>';
-  html += '<button class="btn btn-sm btn-secondary" onclick="navMonth(1)" title="Next month"><i data-lucide="chevron-right"></i></button>';
-  html += '</div>';
-  html += '<div style="display:flex;align-items:center;gap:8px">';
-  html += '<label class="cal-date-picker" title="Choose date" onclick="openCalDatePicker(event)">'+
-    '<i data-lucide="calendar"></i>'+
-    '<input type="date" id="cal-date-jump" value="'+selDate+'" onchange="jumpToDate(this.value)">'+
-  '</label>';
-  html += '<button class="btn btn-sm btn-secondary" onclick="selectDate(\''+today()+'\')">Today</button>';
-  html += '</div></div>';
-
-  // 0. Month summary + dot legend
-  var monthPrefix = cy + '-' + String(cm + 1).padStart(2, '0');
-  var monthTasks = state.tasks.filter(function(t){ return t.dueDate && t.dueDate.indexOf(monthPrefix) === 0; });
-  var monthDone = monthTasks.filter(function(t){ return t.completed; }).length;
-  var monthRate = monthTasks.length ? Math.round((monthDone / monthTasks.length) * 100) : 0;
-  var upcomingTasks = state.tasks.filter(function(t){ return t.dueDate && t.dueDate >= today() && !t.completed; }).length;
-
-  html += '<div class="stat-strip" style="margin-bottom:14px">'+
-    '<div class="stat-tile"><div class="tile-value" style="color:var(--primary)">'+monthTasks.length+'</div><div class="tile-label">Tasks this month</div></div>'+
-    '<div class="stat-tile"><div class="tile-value" style="color:var(--success)">'+monthDone+'</div><div class="tile-label">Completed</div></div>'+
-    '<div class="stat-tile"><div class="tile-value">'+monthRate+'%</div><div class="tile-label">Completion</div></div>'+
-    '<div class="stat-tile"><div class="tile-value" style="color:var(--warning)">'+upcomingTasks+'</div><div class="tile-label">Upcoming</div></div>'+
-  '</div>'+
-  '<div class="cal-legend" style="margin-bottom:12px">'+
-    '<span class="cal-legend-item"><span class="day-dot completed"></span> Completed</span>'+
-    '<span class="cal-legend-item"><span class="day-dot frog"></span> Priority</span>'+
-    '<span class="cal-legend-item"><span class="day-dot normal"></span> Pending</span>'+
-    '<span class="cal-legend-item"><span class="legend-today"></span> Today</span>'+
-  '</div>';
-
-  // 1. Clean Month Grid
-  html += renderMonthGrid(cm, cy);
-
-  // 2. Day Details Panel
-  var dayTasks = getTasksForDate(selDate);
-  var activeTasks = dayTasks.filter(function(t){ return !t.completed; });
-  var completedTasks = dayTasks.filter(function(t){ return t.completed; });
-  var isPast = selDate < today();
-  var dayRate = dayTasks.length ? Math.round((completedTasks.length / dayTasks.length) * 100) : 0;
-
-  html += '<div class="day-panel" style="margin-top:20px">';
-  
-  // Header with quick date title
-  html += '<div class="day-panel-header">'+
-    '<div><h4 style="font-size:16px;font-weight:700">'+fmtDate(selDate)+(selDate === today() ? ' <span class="badge badge-today">Today</span>' : selDate === getTomorrowStr() ? ' <span class="badge badge-schedule">Tomorrow</span>' : '')+(isPast?' <span class="past-badge">Past</span>':'')+'</h4></div>'+
-    '<div class="day-progress" style="font-size:13px;font-weight:600;color:var(--text-secondary)">'+completedTasks.length+'/'+dayTasks.length+' completed · '+dayRate+'%</div>'+
-  '</div>';
-
-  // Quick Add Task for Selected Date
-  if(!isPast){
-    var goalOptions = '<option value="">🎯 Standalone Task</option>' + 
-      state.goals.map(function(g){ return '<option value="'+g.id+'">🎯 '+escHtml(g.title)+'</option>'; }).join('');
-
-    html += '<div class="add-task-card" style="margin-bottom:16px;padding:10px 14px">'+
-      '<div class="add-task-inline">'+
-        '<input type="text" placeholder="Schedule a task for '+fmtDateShort(selDate)+'..." id="cal-add-input" onkeydown="if(event.key===\'Enter\')calAddTask()">'+
-        '<button class="btn btn-sm btn-primary" onclick="calAddTask()"><i data-lucide="plus"></i> Add (+20 XP)</button>'+
+  return '<section class="calendar-page">'+
+    '<div class="calendar-first">'+
+      '<div class="calendar-page-head">'+
+        '<div><div class="daily-label">Calendar</div><h1>'+title+'</h1></div>'+
+        '<div class="calendar-actions">'+
+          '<button class="btn btn-secondary" onclick="navMonth(-1)" title="Previous month"><i data-lucide="chevron-left"></i></button>'+
+          '<button class="btn btn-secondary" onclick="selectDate(\''+today()+'\')">Today</button>'+
+          '<button class="btn btn-secondary" onclick="navMonth(1)" title="Next month"><i data-lucide="chevron-right"></i></button>'+
+        '</div>'+
       '</div>'+
-      '<div style="display:flex;gap:10px;align-items:center;margin-top:6px">'+
-        '<select id="cal-add-goal" style="padding:4px 8px;border-radius:var(--radius-xs);border:1px solid var(--border);background:var(--bg-surface2);color:var(--text);font-size:12px;outline:none">'+goalOptions+'</select>'+
-        '<input type="time" id="cal-add-time" title="Start Time" style="padding:4px 8px;border-radius:var(--radius-xs);border:1px solid var(--border);background:var(--bg-surface2);color:var(--text);font-size:12px;outline:none">'+
+      renderMonthGrid(cm,cy)+
+    '</div>'+
+    '<aside class="selected-day-panel">'+
+      '<div class="selected-day-head">'+
+        '<div><div class="daily-label">Selected date</div><h2>'+fmtDate(state.selectedDate)+'</h2></div>'+
+        '<div class="daily-score small"><strong>'+done+'/'+total+'</strong><span>done</span></div>'+
       '</div>'+
-    '</div>';
-  }
-
-  // Active Pending Tasks List
-  html += '<div class="sidebar-label" style="padding:0;margin-bottom:8px">Active Tasks ('+activeTasks.length+')</div>';
-  if(activeTasks.length === 0){
-    html += '<div class="empty-state" style="padding:24px;background:var(--bg-surface2);border-radius:var(--radius-sm)"><i data-lucide="check-circle" style="width:28px;height:28px;opacity:0.3"></i><p style="font-size:13px;margin-top:4px">No active tasks for this day. Add one above to plan ahead!</p></div>';
-  } else {
-    html += '<div class="task-list">';
-    activeTasks.forEach(function(t){ html += renderTaskCard(t); });
-    html += '</div>';
-  }
-
-  // 3. Completed Tasks Accordion (Moved out of main view space)
-  if(completedTasks.length > 0){
-    html += '<details style="margin-top:16px;background:var(--bg-surface2);border-radius:var(--radius-sm);padding:10px 14px;border:1px solid var(--border-light)">'+
-      '<summary style="cursor:pointer;font-size:12px;font-weight:700;color:var(--text-muted);display:flex;align-items:center;justify-content:space-between">'+
-        '<span>✓ Completed Tasks ('+completedTasks.length+')</span>'+
-        '<span style="font-size:11px;font-weight:500">Click to expand</span>'+
-      '</summary>'+
-      '<div class="task-list" style="margin-top:10px">';
-      completedTasks.forEach(function(t){ html += renderTaskCard(t); });
-    html += '</div></details>';
-  }
-
-  // 4. Simplified Schedule Agenda Timeline
-  html += '<div class="timeline-section" style="margin-top:20px">'+
-    '<div class="timeline-header"><span>Schedule Timeline</span><span style="font-size:11px;color:var(--text-muted)">Click time slot to schedule</span></div>';
-  html += buildSimpleTimeline(selDate);
-  html += '</div></div>';
-
-  return html;
+      '<div class="daily-progress"><div style="width:'+rate+'%"></div></div>'+
+      (selectedIsPast?renderPastNote():renderDayComposer())+
+      '<div class="section-title"><span>Tasks</span><h2>'+activeTasks.length+' active</h2></div>'+
+      renderTaskList(activeTasks, selectedTasks.length===0)+
+      (completedTasks.length?'<div class="section-title completed-title"><span>Done</span><h2>'+completedTasks.length+' completed</h2></div><div class="task-list">'+completedTasks.map(renderTaskCard).join('')+'</div>':'')+
+    '</aside>'+
+  '</section>';
 }
 
-// ---- SIMPLIFIED HOUR AGENDA ----
-function buildSimpleTimeline(date){
-  var tasks = getTasksForDate(date).filter(function(t){ return !t.completed && t.startTime; });
-  var hours = [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23];
-  var isToday = date === today();
-  var nowHour = new Date().getHours();
-
-  var html = '<div id="timeline-scroll" style="display:flex;flex-direction:column;gap:6px;max-height:360px;overflow-y:auto;padding-right:4px">';
-
-  hours.forEach(function(h){
-    var timeFormatted = String(h).padStart(2,'0') + ':00';
-    var hourTasks = tasks.filter(function(t){
-      var tHour = parseInt(t.startTime.split(':')[0]);
-      var endHour = t.endTime ? parseInt(t.endTime.split(':')[0]) : tHour;
-      return h >= tHour && h <= endHour;
-    });
-
-    var slotCls = 'timeline-slot';
-    if(date < today() || (isToday && h < nowHour)) slotCls += ' past';
-    if(isToday && h === nowHour) slotCls += ' current';
-
-    html += '<div class="'+slotCls+'" data-date="'+date+'" data-hour="'+h+'" style="display:flex;align-items:center;gap:12px;padding:8px 12px;background:var(--bg-surface2);border-radius:var(--radius-sm);border:1px solid var(--border-light)">'+
-      '<span style="font-size:12px;font-weight:700;color:var(--text-muted);width:45px;flex-shrink:0">'+timeFormatted+'</span>';
-
-    if(hourTasks.length > 0){
-      html += '<div style="display:flex;gap:6px;flex:1;flex-wrap:wrap">';
-      hourTasks.forEach(function(t){
-        var tHour = parseInt(t.startTime.split(':')[0]);
-        var isStart = (h === tHour);
-        var timeLabel = t.endTime ? (t.startTime + ' - ' + t.endTime) : t.startTime;
-        var pillStyle = isStart
-          ? 'background:var(--primary-bg);color:var(--primary);border:1px solid var(--primary)'
-          : 'background:var(--bg-surface2);color:var(--text-muted);border:1px dashed var(--border)';
-        html += '<span onclick="openTaskEditor(\''+t.id+'\')" style="'+pillStyle+';padding:3px 10px;border-radius:var(--radius-xs);font-size:12px;font-weight:600;cursor:pointer">'+escHtml(t.title)+' ('+(isStart?timeLabel:'continues')+')</span>';
-      });
-      html += '</div>';
-    } else {
-      html += '<div style="flex:1;font-size:12px;color:var(--text-muted);cursor:pointer;opacity:0.6" onclick="quickScheduleAtHour('+h+')">+ Click to schedule slot</div>';
-    }
-
-    html += '</div>';
-  });
-
-  html += '</div>';
-  return html;
+function renderPastNote(){
+  return '<div class="calendar-note"><i data-lucide="lock"></i><span>Past dates are read-only. Pick today or a future date to add tasks.</span></div>';
 }
 
-function quickScheduleAtHour(hour){
-  var selDate = state.selectedDate || today();
-  var timeStr = String(hour).padStart(2,'0') + ':00';
-  if(isTimeInPast(selDate, timeStr)){ toast('Cannot schedule tasks in the past','error'); return; }
-
-  openTaskEditor(null);
-  setTimeout(function(){
-    var startInput = document.getElementById('edit-start');
-    if(startInput) startInput.value = timeStr;
-  }, 50);
-}
-
-function scrollTimeline(){
-  var container = document.getElementById('timeline-scroll');
-  if(!container) return;
-  var target = container.querySelector('.timeline-slot.current') ||
-               container.querySelector('.timeline-slot:not(.past)') ||
-               container.querySelector('.timeline-slot');
-  if(!target) return;
-  var containerRect = container.getBoundingClientRect();
-  var targetRect = target.getBoundingClientRect();
-  container.scrollTop += (targetRect.top - containerRect.top);
-}
-
-// ---- MONTH GRID ----
-function renderMonthGrid(cm, cy){
-  var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  var html = '<div class="calendar-grid">';
-  dayNames.forEach(function(d){ html += '<div class="day-header">'+d+'</div>'; });
-
-  var firstDay = new Date(cy, cm, 1).getDay();
-  var daysInMonth = new Date(cy, cm + 1, 0).getDate();
-  var daysInPrevMonth = new Date(cy, cm, 0).getDate();
-  var todayStr = today();
-
-  for(var i = firstDay - 1; i >= 0; i--){
-    var d = daysInPrevMonth - i;
-    var ds = cy + '-' + String(cm === 0 ? 12 : cm).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-    html += renderDayCell(d, ds, true, todayStr);
-  }
-  for(var d = 1; d <= daysInMonth; d++){
-    var ds = cy + '-' + String(cm + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-    html += renderDayCell(d, ds, false, todayStr);
-  }
-  var remaining = 42 - (firstDay + daysInMonth);
-  for(var d = 1; d <= remaining; d++){
-    var nm = cm + 2; var ny = nm > 12 ? cy + 1 : cy; var nnm = nm > 12 ? 1 : nm;
-    var ds = ny + '-' + String(nnm).padStart(2, '0') + '-' + String(d).padStart(2, '0');
-    html += renderDayCell(d, ds, true, todayStr);
-  }
-  html += '</div>';
-  return html;
-}
-
-function renderDayCell(dayNum, dateStr, otherMonth, todayStr){
-  var tasks = getTasksForDate(dateStr);
-  var isToday = dateStr === todayStr;
-  var isPast = dateStr < todayStr;
-  var isSelected = dateStr === state.selectedDate;
-  var completed = tasks.filter(function(t){ return t.completed; }).length;
-  var total = tasks.length;
-  var pct = total ? Math.round((completed / total) * 100) : 0;
-  
-  var dots = tasks.slice(0, 5).map(function(t){
-    if(t.completed) return '<span class="day-dot completed"></span>';
-    if(t.eatTheFrog) return '<span class="day-dot frog"></span>';
-    return '<span class="day-dot normal"></span>';
-  }).join('');
-
-  var pctClass = pct === 100 ? 'full' : pct > 0 ? 'partial' : 'empty';
-  var pctHtml = total > 0 ? '<span class="day-pct '+pctClass+'">'+pct+'%</span>' : '';
-  var countHtml = total > 0 ? '<span class="day-count">'+total+'</span>' : '';
-
-  var cls = ['day-cell'];
-  if(isToday) cls.push('today');
-  if(isSelected) cls.push('selected');
-  if(otherMonth) cls.push('other-month');
-  if(isPast && !otherMonth) cls.push('past-day');
-
-  return '<div class="'+cls.join(' ')+'" data-date="'+dateStr+'" onclick="selectDate(\''+dateStr+'\')">'+
-    '<div class="day-num">'+dayNum+'</div>'+
-    countHtml +
-    '<div class="day-dots">'+dots+'</div>'+
-    pctHtml +
+function renderDayComposer(){
+  var goalOptions='<option value="">No goal</option>'+state.goals.map(function(g){return '<option value="'+g.id+'">'+escHtml(g.title)+'</option>';}).join('');
+  return '<div class="calendar-composer">'+
+    '<input type="text" id="cal-add-input" placeholder="Add a task for '+fmtDateShort(state.selectedDate)+'..." onkeydown="if(event.key===\'Enter\')calAddTask()">'+
+    '<div class="calendar-composer-options">'+
+      '<select id="cal-add-goal">'+goalOptions+'</select>'+
+      '<input type="time" id="cal-add-time">'+
+      '<label><input type="checkbox" id="cal-add-priority"> Priority</label>'+
+      '<button class="btn btn-primary" onclick="calAddTask()"><i data-lucide="plus"></i> Add</button>'+
+    '</div>'+
   '</div>';
 }
 
-// ---- ACTIONS & NAVIGATION ----
-function selectDate(ds){ state.selectedDate = ds; syncCalendarToDate(ds); pageRender(); }
+function renderTaskList(tasks, emptyDay){
+  if(tasks.length)return '<div class="task-list">'+tasks.map(renderTaskCard).join('')+'</div>';
+  return '<div class="empty-state compact-empty"><i data-lucide="calendar-plus"></i><h3>'+(emptyDay?'Nothing planned':'All clear')+'</h3><p>'+(emptyDay?'Add one task above for this date.':'Every task for this date is completed.')+'</p></div>';
+}
 
-function jumpToDate(ds){ if(ds) selectDate(ds); }
+function renderMonthGrid(cm,cy){
+  var names=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var firstDay=new Date(cy,cm,1).getDay();
+  var daysInMonth=new Date(cy,cm+1,0).getDate();
+  var prevMonthDays=new Date(cy,cm,0).getDate();
+  var html='<div class="calendar-grid simple-calendar-grid">';
+  names.forEach(function(n){html+='<div class="day-header">'+n+'</div>';});
 
-function navMonth(dir){
-  state.calendarMonth += dir;
-  if(state.calendarMonth < 0){ state.calendarMonth = 11; state.calendarYear--; }
-  else if(state.calendarMonth > 11){ state.calendarMonth = 0; state.calendarYear++; }
+  for(var i=firstDay-1;i>=0;i--){
+    var day=prevMonthDays-i;
+    var prevMonth=cm===0?11:cm-1;
+    var prevYear=cm===0?cy-1:cy;
+    html+=renderDayCell(day,toDateStr(new Date(prevYear,prevMonth,day)),true);
+  }
+  for(var d=1;d<=daysInMonth;d++){
+    html+=renderDayCell(d,toDateStr(new Date(cy,cm,d)),false);
+  }
+  var cells=firstDay+daysInMonth;
+  var nextDay=1;
+  while(cells<42){
+    var nextMonth=cm===11?0:cm+1;
+    var nextYear=cm===11?cy+1:cy;
+    html+=renderDayCell(nextDay,toDateStr(new Date(nextYear,nextMonth,nextDay)),true);
+    nextDay++;
+    cells++;
+  }
+  html+='</div>';
+  return html;
+}
+
+function renderDayCell(day,dateStr,otherMonth){
+  var tasks=getTasksForDate(dateStr);
+  var done=tasks.filter(function(t){return t.completed}).length;
+  var priority=tasks.some(function(t){return t.eatTheFrog&&!t.completed});
+  var cls=['day-cell'];
+  if(otherMonth)cls.push('other-month');
+  if(dateStr===today())cls.push('today');
+  if(dateStr===state.selectedDate)cls.push('selected');
+  if(dateStr<today()&&!otherMonth)cls.push('past-day');
+  var dots=tasks.slice(0,4).map(function(t){return '<span class="day-dot '+(t.completed?'completed':t.eatTheFrog?'frog':'normal')+'"></span>';}).join('');
+  return '<button class="'+cls.join(' ')+'" onclick="selectDate(\''+dateStr+'\')">'+
+    '<span class="day-num">'+day+'</span>'+
+    (tasks.length?'<span class="day-count">'+tasks.length+'</span>':'')+
+    (priority?'<span class="priority-corner"><i data-lucide="zap"></i></span>':'')+
+    '<span class="day-dots">'+dots+'</span>'+
+    (tasks.length?'<span class="day-summary">'+done+'/'+tasks.length+'</span>':'')+
+  '</button>';
+}
+
+function selectDate(dateStr){
+  state.selectedDate=dateStr;
+  syncCalendarToDate(dateStr);
   pageRender();
 }
 
-function openCalDatePicker(e){
-  if(e && e.target && e.target.tagName === 'INPUT') return; // let the input's own controls handle it
-  var input = document.getElementById('cal-date-jump');
-  if(!input) return;
-  if(typeof input.showPicker === 'function'){
-    try{ input.showPicker(); }catch(err){ input.focus(); }
-  } else {
-    input.focus();
-  }
+function navMonth(dir){
+  state.calendarMonth+=dir;
+  if(state.calendarMonth<0){state.calendarMonth=11;state.calendarYear--}
+  if(state.calendarMonth>11){state.calendarMonth=0;state.calendarYear++}
+  pageRender();
 }
 
 function calAddTask(){
-  var input = document.getElementById('cal-add-input');
-  var goalInput = document.getElementById('cal-add-goal');
-  var timeInput = document.getElementById('cal-add-time');
-
-  if(!input || !input.value.trim()) return;
-  var targetDate = state.selectedDate || today();
-
-  if(targetDate < today()){ toast('Cannot add tasks to past dates', 'error'); return; }
-  var startTime = timeInput && timeInput.value ? timeInput.value : null;
-
+  var input=document.getElementById('cal-add-input');
+  if(!input||!input.value.trim())return;
+  if(state.selectedDate<today()){toast('Cannot add tasks to past dates','error');return}
+  var goal=document.getElementById('cal-add-goal');
+  var time=document.getElementById('cal-add-time');
+  var priority=document.getElementById('cal-add-priority');
+  var startTime=time&&time.value?time.value:null;
+  if(isTimeInPast(state.selectedDate,startTime)){toast('Cannot schedule a past time for today','error');return}
+  var isPriority=priority&&priority.checked;
+  if(isPriority)state.tasks.forEach(function(t){t.eatTheFrog=false});
   state.tasks.push({
-    id: genId(),
-    title: input.value.trim(),
-    goalId: goalInput ? goalInput.value || null : null,
-    description: '',
-    completed: false,
-    createdAt: new Date().toISOString(),
-    dueDate: targetDate,
-    startTime: startTime,
-    endTime: null,
-    duration: null,
-    eisenhower: null,
-    eatTheFrog: false,
-    todayTask: targetDate === today(),
-    subtasks: [],
-    tags: [],
-    pomodoroCount: 0,
+    id:genId(),
+    title:input.value.trim(),
+    goalId:goal?goal.value||null:null,
+    description:'',
+    completed:false,
+    createdAt:new Date().toISOString(),
+    dueDate:state.selectedDate,
+    startTime:startTime,
+    endTime:null,
+    duration:null,
+    eisenhower:null,
+    eatTheFrog:isPriority,
+    todayTask:state.selectedDate===today(),
+    subtasks:[],
+    tags:[],
+    pomodoroCount:0
   });
-
-  input.value = '';
-  if(timeInput) timeInput.value = '';
-  
   persistTasks();
   pageRender();
-  toast('Task scheduled for ' + fmtDateShort(targetDate), 'success');
+  toast('Task added for '+fmtDateShort(state.selectedDate),'success');
 }
 
-// ---- DRAG & DROP ----
-function setupDragDrop(){
-  // Drag sources: every task card is already draggable=true (renderTaskCard in shared.js).
-  var cards = document.querySelectorAll('.task-card[draggable]');
-  cards.forEach(function(card){
-    card.addEventListener('dragstart', function(e){
-      e.dataTransfer.setData('text/plain', card.dataset.taskId);
-      e.dataTransfer.effectAllowed = 'move';
-    });
-  });
-
-  // Drop target: month-grid day cells → reschedule the task to that date.
-  var dayCells = document.querySelectorAll('.day-cell[data-date]');
-  dayCells.forEach(function(cell){
-    cell.addEventListener('dragover', function(e){ e.preventDefault(); e.dataTransfer.dropEffect = 'move'; cell.classList.add('drag-over'); });
-    cell.addEventListener('dragleave', function(e){ cell.classList.remove('drag-over'); });
-    cell.addEventListener('drop', function(e){
-      e.preventDefault();
-      cell.classList.remove('drag-over');
-      var taskId = e.dataTransfer.getData('text/plain');
-      if(taskId) moveTaskToDate(taskId, cell.dataset.date);
-    });
-  });
-
-  // Drop target: timeline hour slots → reschedule the task to that date & hour.
-  var slots = document.querySelectorAll('.timeline-slot[data-date]');
-  slots.forEach(function(slot){
-    slot.addEventListener('dragover', function(e){ e.preventDefault(); e.dataTransfer.dropEffect = 'move'; slot.classList.add('drag-over'); });
-    slot.addEventListener('dragleave', function(e){ slot.classList.remove('drag-over'); });
-    slot.addEventListener('drop', function(e){
-      e.preventDefault();
-      slot.classList.remove('drag-over');
-      var taskId = e.dataTransfer.getData('text/plain');
-      if(taskId) moveTaskToSlot(taskId, slot.dataset.date, slot.dataset.hour);
-    });
-  });
-}
-
-function moveTaskToDate(taskId, dateStr){
-  if(!dateStr) return;
-  var t = state.tasks.find(function(t){ return t.id === taskId; });
-  if(!t) return;
-  if(dateStr < today()){ toast('Cannot move tasks to the past', 'error'); return; }
-  t.dueDate = dateStr;
-  t.todayTask = dateStr === today();
-  persistTasks();
-  state.selectedDate = dateStr;
-  syncCalendarToDate(dateStr);
-  pageRender();
-  toast('Task moved to ' + fmtDateShort(dateStr), 'success');
-}
-
-function moveTaskToSlot(taskId, dateStr, hour){
-  if(!dateStr) return;
-  var t = state.tasks.find(function(t){ return t.id === taskId; });
-  if(!t) return;
-  var timeStr = String(hour).padStart(2, '0') + ':00';
-  if(dateStr < today()){ toast('Cannot move tasks to the past', 'error'); return; }
-  if(isTimeInPast(dateStr, timeStr)){ toast('Cannot schedule tasks in the past', 'error'); return; }
-  t.dueDate = dateStr;
-  t.todayTask = dateStr === today();
-  t.startTime = timeStr;
-  persistTasks();
-  state.selectedDate = dateStr;
-  syncCalendarToDate(dateStr);
-  pageRender();
-  toast('Task scheduled for ' + fmtDateShort(dateStr) + ' at ' + timeStr, 'success');
-}
-
-// ---- PAGE GLUE ----
 function pageRender(){
-  var content = document.getElementById('content');
-  if(content) content.innerHTML = renderCalendarView();
+  var content=document.getElementById('content');
+  if(content)content.innerHTML=renderCalendarView();
   renderQuickStats();
+  renderHeader();
   updateLucide();
-  setupDragDrop();
-  scrollTimeline();
 }
 
-window.selectDate = selectDate;
-window.jumpToDate = jumpToDate;
-window.navMonth = navMonth;
-window.openCalDatePicker = openCalDatePicker;
-window.calAddTask = calAddTask;
-window.quickScheduleAtHour = quickScheduleAtHour;
-window.shiftDate = shiftDate;
-window.syncCalendarToDate = syncCalendarToDate;
-window.moveTaskToDate = moveTaskToDate;
-window.moveTaskToSlot = moveTaskToSlot;
-window.setupDragDrop = setupDragDrop;
-window.pageRender = pageRender;
+window.selectDate=selectDate;
+window.navMonth=navMonth;
+window.calAddTask=calAddTask;
+window.pageRender=pageRender;
 
-document.addEventListener('DOMContentLoaded', function(){
-  if(window.lucide){ lucide.createIcons(); commonInit(); pageRender(); }
-  else{ setTimeout(function(){ commonInit(); pageRender(); }, 200); }
+document.addEventListener('DOMContentLoaded',function(){
+  if(window.lucide){lucide.createIcons();commonInit();pageRender()}
+  else{setTimeout(function(){commonInit();pageRender()},200)}
 });
 </script>
 </body>
