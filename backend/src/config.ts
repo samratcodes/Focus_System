@@ -1,4 +1,9 @@
-import "dotenv/config";
+// Local development: load .env if present. On Vercel, env vars come from the project settings.
+try {
+  process.loadEnvFile();
+} catch {
+  // no .env file — fine in production
+}
 
 function required(name: string) {
   const v = process.env[name];
