@@ -44,8 +44,15 @@ scripts/api-smoke-test.mjs
 
 ## Production (Vercel)
 
-Deployed as a Vercel project with root directory `backend/` (zero-config Express: `src/server.ts` default-exports
-the app). `vercel-build` runs `prisma generate`, `prisma migrate deploy` and `tsc`. Set `DATABASE_URL`, `DIRECT_URL`,
-`AUTH_SECRET` and `CORS_ORIGINS` (the website URL) in the project's environment variables.
+Vercel project `focus-system-api` with Root Directory `backend`. Every push to `main` deploys automatically
+(zero-config Express: `src/server.ts` default-exports the app; the output is CommonJS so it loads however Vercel
+packages the function). Environment variables (Production): `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `CORS_ORIGINS`.
+
+**Database migrations are applied manually** when `prisma/schema.prisma` changes:
+
+```bash
+npx prisma migrate dev --name <change>   # create the migration locally
+npx prisma migrate deploy                # apply it to Neon (uses DIRECT_URL from .env)
+```
 
 The full endpoint list is in the [root README](../README.md#api).
