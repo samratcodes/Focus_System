@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Focus System API (Node.js + Express + Prisma) used by the website and the Flutter app",
+  "type": "module",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
@@ -38,6 +39,6 @@
     "typescript": "^5.9.3"
   },
   "engines": {
-    "node": ">=20"
+    "node": "22.x"
   }
 }
