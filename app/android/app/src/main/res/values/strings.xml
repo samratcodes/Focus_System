@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_name">Focus System · Today</string>
+    <string name="widget_description">Today\'s tasks, quick add and the focus timer</string>
+    <string name="widget_today">Today</string>
+    <string name="widget_refresh">Refresh</string>
+    <string name="widget_add">Add task</string>
+    <string name="widget_focus">Start or pause the focus timer</string>
+    <string name="widget_complete">Mark complete</string>
+    <string name="widget_empty">Your list is clear\nTap + to add one action</string>
+    <string name="widget_signed_out">Sign in to Focus System\nto see today\'s tasks</string>
+</resources>

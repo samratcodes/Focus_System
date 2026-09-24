@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Same tokens as the website (styles.css :root) -->
+<resources>
+    <color name="fs_bg">#09090B</color>
+    <color name="fs_surface">#121215</color>
+    <color name="fs_surface2">#1A1A1F</color>
+    <color name="fs_surface3">#25252B</color>
+    <color name="fs_border">#25252B</color>
+    <color name="fs_text">#FAFAFA</color>
+    <color name="fs_text_secondary">#A1A1AA</color>
+    <color name="fs_text_muted">#52525B</color>
+    <color name="fs_primary">#6366F1</color>
+    <color name="fs_success">#10B981</color>
+    <color name="fs_frog">#F97316</color>
+    <color name="ic_launcher_background">#09090B</color>
+</resources>
