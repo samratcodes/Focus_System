@@ -1,6 +1,6 @@
 import cookieParser from "cookie-parser";
 import cors, { type CorsOptions } from "cors";
-import express from "express";
+import express, { type Express } from "express";
 import helmet from "helmet";
 import morgan from "morgan";
 import { config } from "./config.js";
@@ -11,8 +11,8 @@ import { goalsRouter } from "./routes/goals.js";
 import { importRouter } from "./routes/import.js";
 import { tasksRouter } from "./routes/tasks.js";
 
-export function createApp() {
-  const app = express();
+/** Registers middleware, routes and the error handler on an Express app. */
+export function configureApp(app: Express) {
 
   // Behind the website's /api rewrite (or a reverse proxy): trust X-Forwarded-For for req.ip.
   app.set("trust proxy", "loopback");

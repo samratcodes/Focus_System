@@ -1,8 +1,10 @@
+import express from "express";
 import { config } from "./config.js";
-import { createApp } from "./create-app.js";
+import { configureApp } from "./create-app.js";
 import { prisma } from "./lib/db.js";
 
-const app = createApp();
+// Created here so Vercel detects this file as the Express entrypoint.
+const app = configureApp(express());
 
 // On Vercel the exported app is served as a Vercel Function (no listen needed).
 // Locally (npm run dev / npm start) we start a normal HTTP server.
