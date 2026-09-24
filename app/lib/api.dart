@@ -5,9 +5,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:http/http.dart' as http;
 
-/// Backend (../backend, Node.js + Express) used when nothing has been configured. 10.0.2.2 is the host machine
-/// from the Android emulator. Override with --dart-define=API_URL=https://…
-const defaultApiUrl = String.fromEnvironment('API_URL', defaultValue: 'http://10.0.2.2:4000');
+/// The live backend (../backend, Node.js + Express on Vercel). For local development
+/// use --dart-define=API_URL=http://10.0.2.2:4000 (emulator) or set it on the sign-in screen.
+const defaultApiUrl = String.fromEnvironment('API_URL', defaultValue: 'https://focus-system-api.vercel.app');
 
 class ApiException implements Exception {
   final int status;

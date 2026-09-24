@@ -3,6 +3,15 @@
 Plan today. Do one thing at a time. The website and the mobile app are **one product**:
 the same account, the same data and the same focus timer — served by one Node.js backend.
 
+**Live**
+
+| Part | URL | Hosting |
+| --- | --- | --- |
+| Website | https://focus-system-amber.vercel.app | Vercel project `focus-system` (root `website/`) |
+| Backend API | https://focus-system-api.vercel.app ([health](https://focus-system-api.vercel.app/api/health)) | Vercel project `focus-system-api` (root `backend/`) |
+| Database | Neon PostgreSQL (us-east-2) | connection strings live only in Vercel env vars / local `.env` |
+| Android app | `app/build/app/outputs/flutter-apk/app-release.apk` | uses the live API by default |
+
 ```
 Focus System/
 ├── backend/   Node.js + Express + Prisma — the REST API and the database (one backend for everything)
