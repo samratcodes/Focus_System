@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../app_state.dart';
 import '../logic.dart';
 import '../theme.dart';
+import '../widgets/focus_controls.dart';
 import '../widgets/ui.dart';
 
 class FocusScreen extends StatelessWidget {
@@ -32,16 +33,18 @@ class FocusScreen extends StatelessWidget {
           child: RefreshIndicator(
             onRefresh: s.refresh,
             child: ListView(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(12),
               children: [
                 // .focus-timer-area
                 Panel(
-                  padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+                  padding: const EdgeInsets.fromLTRB(14, 16, 14, 24),
                   borderColor: Colors.transparent,
                   child: Column(
                     children: [
-                      const _TimerRing(size: 250),
-                      const SizedBox(height: 22),
+                      const ModeTabs(),
+                      const SizedBox(height: 18),
+                      const _TimerRing(size: 236),
+                      const SizedBox(height: 20),
                       Wrap(
                         alignment: WrapAlignment.center,
                         spacing: 10,
@@ -80,6 +83,8 @@ class FocusScreen extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 16),
+                      const CycleProgress(),
+                      const SizedBox(height: 10),
                       Text.rich(
                         TextSpan(
                           text: 'Sessions completed: ',
@@ -321,7 +326,7 @@ class _FocusCard extends StatelessWidget {
   final Widget child;
   @override
   Widget build(BuildContext context) => Panel(
-    padding: const EdgeInsets.all(14),
+    padding: const EdgeInsets.all(12),
     borderColor: Colors.transparent,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,

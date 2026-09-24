@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Release builds shrink unused resources. The notification icon is referenced by name
+     from Dart (flutter_local_notifications), which the shrinker can't see, so keep drawables
+     explicitly; otherwise notifications silently fail to show. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/*,@mipmap/*,@raw/*" />

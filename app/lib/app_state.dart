@@ -318,6 +318,17 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
+  /// Jump to a phase (focus / short break / long break). The timer stays paused.
+  Future<void> setFocusMode(String mode) async {
+    try {
+      final res = await api.post('/api/focus', {'action': 'mode', 'mode': mode});
+      serverOffset = (res['serverTime'] as num).toInt() - DateTime.now().millisecondsSinceEpoch;
+      _update((d) => _copy(focus: FocusState.fromJson(res['focus'] as Map<String, dynamic>)));
+    } catch (e) {
+      await _fail(e);
+    }
+  }
+
   Future<void> attachTask(String? taskId) async {
     _update((d) => _copy(focus: d.focus.withAttached(taskId)));
     try {
@@ -531,6 +542,18 @@ class AppState extends ChangeNotifier with WidgetsBindingObserver {
         api.token = token;
       }
       _update((d) => _copy(user: User.fromJson(res['user'] as Map<String, dynamic>)));
+      return null;
+    } on ApiException catch (e) {
+      return e.message;
+    }
+  }
+
+  /// Permanently deletes the account and all its data (required by Play policy).
+  /// Returns an error message, or null on success.
+  Future<String?> deleteAccount(String password) async {
+    try {
+      await api.delete('/api/auth/me', {'password': password});
+      await logout(message: 'Your account and all its data were deleted.');
       return null;
     } on ApiException catch (e) {
       return e.message;

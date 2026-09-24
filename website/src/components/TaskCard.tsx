@@ -22,7 +22,7 @@ export default function TaskCard({ task: t }: { task: TaskDTO }) {
   };
 
   return (
-    <div className={`task-card ${t.completed ? "completed" : ""}`} data-task-id={t.id}>
+    <div className={`task-card ${t.completed ? "completed" : ""} ${t.isPriority && !t.completed ? "priority" : ""}`} data-task-id={t.id}>
       <div
         className={`task-check ${t.completed ? "done" : ""}`}
         role="checkbox"

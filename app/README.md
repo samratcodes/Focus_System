@@ -40,3 +40,29 @@ in the background without opening the app. When a focus phase ends, the widget f
 
 iOS: the app, notifications and sync work; a home-screen widget needs a WidgetKit extension added in Xcode
 (`home_widget` reads the same keys; iOS name `FocusTasksWidget`).
+
+## Release builds & Google Play
+
+Release builds are signed with **your upload key**, not the debug key:
+
+- `android/app/upload-keystore.jks` — the keystore
+- `android/key.properties` — its passwords (`storePassword`, `keyPassword`, `keyAlias=upload`)
+
+Both are git-ignored. **Back them up somewhere safe** (password manager / private drive). With Play App
+Signing, Google can reset a lost upload key, but it takes time.
+
+```bash
+flutter build apk --release          # build/app/outputs/flutter-apk/app-release.apk  (install on a phone)
+flutter build appbundle --release    # build/app/outputs/bundle/release/app-release.aab (upload to Play Console)
+```
+
+Security / Play readiness built in:
+
+- HTTPS only in release (`usesCleartextTraffic=false`; debug builds allow http for a local backend)
+- No backups of app data (`allowBackup=false`, data-extraction rules) — the session token stays on the device
+- Code + resource shrinking (R8) with `res/raw/keep.xml` so notification icons are kept
+- In-app account deletion (Settings → Delete account) and a public privacy policy
+  (https://focus-system-amber.vercel.app/privacy), both required by Google Play
+- Target SDK 35; exact alarms via `SCHEDULE_EXACT_ALARM` only (no Play-restricted `USE_EXACT_ALARM`)
+
+Before bumping a new version to Play, increase `version:` in `pubspec.yaml` (e.g. `1.0.1+2`).

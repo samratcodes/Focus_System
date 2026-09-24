@@ -27,6 +27,7 @@ import type {
 
 export type AnalyticsPeriod = "day" | "week" | "month";
 export type FocusActionName = "start" | "pause" | "reset" | "skip";
+export type FocusMode = "work" | "shortBreak" | "longBreak";
 
 export interface UIState {
   searchQuery: string;
@@ -77,6 +78,7 @@ interface Store {
   deleteGoal: (id: string) => Promise<void>;
 
   focusAction: (action: FocusActionName) => Promise<FocusDTO | null>;
+  setFocusMode: (mode: FocusMode) => Promise<void>;
   attachTask: (taskId: string | null) => Promise<void>;
   applyFocus: (focus: FocusDTO, serverTime?: number) => void;
   handleEvents: (events: XpEvent[] | undefined) => void;
@@ -433,6 +435,21 @@ export function StoreProvider({ initial, children }: { initial: BootstrapDTO; ch
     [applyFocus, handleEvents, fail],
   );
 
+  const setFocusMode = useCallback(
+    async (mode: FocusMode) => {
+      try {
+        const res = await api<{ focus: FocusDTO; serverTime: number }>("/api/focus", {
+          method: "POST",
+          body: { action: "mode", mode },
+        });
+        applyFocus(res.focus, res.serverTime);
+      } catch (err) {
+        fail(err);
+      }
+    },
+    [applyFocus, fail],
+  );
+
   const attachTask = useCallback(
     async (taskId: string | null) => {
       setData((d) => ({ ...d, focus: { ...d.focus, attachedTaskId: taskId } }));
@@ -487,6 +504,7 @@ export function StoreProvider({ initial, children }: { initial: BootstrapDTO; ch
       editGoal,
       deleteGoal,
       focusAction,
+      setFocusMode,
       attachTask,
       applyFocus,
       handleEvents,
@@ -503,7 +521,7 @@ export function StoreProvider({ initial, children }: { initial: BootstrapDTO; ch
     [
       data, today, online, serverOffset, ui, setUi, refresh, createTask, updateTask, toggleComplete, toggleFrog,
       clearFrog, deleteTask, addSubtask, updateSubtask, deleteSubtask, createGoal, editGoal, deleteGoal,
-      focusAction, attachTask, applyFocus, handleEvents, updateSettings, setUser, editingTaskId, overlayOpen,
+      focusAction, setFocusMode, attachTask, applyFocus, handleEvents, updateSettings, setUser, editingTaskId, overlayOpen,
       musicPlaying,
     ],
   );

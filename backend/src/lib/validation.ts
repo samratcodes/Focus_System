@@ -85,6 +85,7 @@ export const focusActionSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("pause") }),
   z.object({ action: z.literal("reset") }),
   z.object({ action: z.literal("skip") }),
+  z.object({ action: z.literal("mode"), mode: z.enum(["work", "shortBreak", "longBreak"]) }),
   z.object({ action: z.literal("attach"), taskId: z.string().nullable() }),
 ]);
 

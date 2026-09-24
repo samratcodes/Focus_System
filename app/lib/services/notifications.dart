@@ -99,6 +99,14 @@ class Notifications {
   /// Asks for notification permission, and once for exact alarms (Android 12+).
   static Future<void> requestPermissions() async {
     if (!supportsDeviceFeatures) return;
+    try {
+      await _requestPermissions();
+    } catch (e) {
+      debugPrint('Permission request failed: $e');
+    }
+  }
+
+  static Future<void> _requestPermissions() async {
     if (Platform.isIOS) {
       await plugin.resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()?.requestPermissions(
         alert: true,
@@ -117,10 +125,20 @@ class Notifications {
     }
   }
 
-  static Future<AndroidScheduleMode> _scheduleMode() async {
-    final exact = await _android?.canScheduleExactNotifications() ?? true;
-    return exact ? AndroidScheduleMode.exactAllowWhileIdle : AndroidScheduleMode.inexactAllowWhileIdle;
+  static Future<bool> _canExact() async {
+    try {
+      return await _android?.canScheduleExactNotifications() ?? true;
+    } catch (_) {
+      return false;
+    }
   }
+
+  static Future<AndroidScheduleMode> _scheduleMode() async =>
+      await _canExact() ? AndroidScheduleMode.exactAllowWhileIdle : AndroidScheduleMode.inexactAllowWhileIdle;
+
+  /// Phase-end alarms: "alarm clock" mode fires on time even in Doze/battery saver.
+  static Future<AndroidScheduleMode> _alarmMode() async =>
+      await _canExact() ? AndroidScheduleMode.alarmClock : AndroidScheduleMode.inexactAllowWhileIdle;
 
   static void _onResponse(NotificationResponse r) {
     if (r.actionId == 'pause' || r.actionId == 'skip') {
@@ -136,6 +154,14 @@ class Notifications {
   /// Mirrors the server timer into notifications. [serverOffset] = server - local clock (ms).
   static Future<void> syncFocus(FocusState f, UserSettings s, {required int serverOffset, String? taskTitle}) async {
     if (!_ready) return;
+    try {
+      await _syncFocus(f, s, serverOffset: serverOffset, taskTitle: taskTitle);
+    } catch (e) {
+      debugPrint('Focus notifications failed: $e');
+    }
+  }
+
+  static Future<void> _syncFocus(FocusState f, UserSettings s, {required int serverOffset, String? taskTitle}) async {
     await plugin.cancel(_focusOngoingId);
     for (var i = 0; i < _maxScheduledPhases; i++) {
       await plugin.cancel(_focusAlarmBaseId + i);
@@ -180,7 +206,9 @@ class Notifications {
     );
 
     // The server keeps cycling work → break → work, so schedule the next few phase ends.
-    final mode = await _scheduleMode();
+    // Each alarm also counts down the phase it starts, so a break (or the next focus
+    // session) stays visible in the shade even while the app is closed.
+    final mode = await _alarmMode();
     var phase = f.mode;
     var sessions = f.sessionCount;
     var at = endsLocal;
@@ -191,13 +219,18 @@ class Notifications {
       if (phase == 'work') {
         sessions++;
         phase = sessions % s.pomoLongInterval == 0 ? 'longBreak' : 'shortBreak';
-        title = 'Focus session complete 🎉';
-        body = '+25 XP · ${phase == 'longBreak' ? 'Long' : 'Short'} break: ${s.phaseSeconds(phase) ~/ 60} min';
+        final breakMin = s.phaseSeconds(phase) ~/ 60;
+        title = 'Focus session complete 🎉 +25 XP';
+        body =
+            phase == 'longBreak'
+                ? 'Long break ($breakMin min) — stand up, stretch, get some water.'
+                : 'Short break ($breakMin min) — rest your eyes.';
       } else {
         phase = 'work';
-        title = 'Break over';
-        body = 'Ready to focus? ${s.pomoWork} minutes starting now.';
+        title = 'Break over ☕';
+        body = 'Next focus session: ${s.pomoWork} minutes. You got this.';
       }
+      final phaseMs = s.phaseSeconds(phase) * 1000;
       await plugin.zonedSchedule(
         _focusAlarmBaseId + i,
         title,
@@ -213,7 +246,17 @@ class Notifications {
             category: AndroidNotificationCategory.alarm,
             audioAttributesUsage: s.alarmEnabled ? AudioAttributesUsage.alarm : AudioAttributesUsage.notification,
             playSound: s.alarmEnabled,
-            color: const Color(0xFF6366F1),
+            color: phase == 'work' ? const Color(0xFF6366F1) : const Color(0xFF10B981),
+            // Live countdown of the phase that just started (break or next focus).
+            showWhen: true,
+            when: at + phaseMs,
+            usesChronometer: true,
+            chronometerCountDown: true,
+            timeoutAfter: phaseMs,
+            actions: [
+              if (phase != 'work') const AndroidNotificationAction('skip', 'Skip break', cancelNotification: true),
+              const AndroidNotificationAction('pause', 'Pause', cancelNotification: true),
+            ],
           ),
           iOS: DarwinNotificationDetails(
             presentSound: s.alarmEnabled,
@@ -223,7 +266,7 @@ class Notifications {
         androidScheduleMode: mode,
         payload: 'focus',
       );
-      at += s.phaseSeconds(phase) * 1000;
+      at += phaseMs;
     }
   }
 
@@ -240,6 +283,14 @@ class Notifications {
   /// Re-schedules reminders for the next 7 days of tasks that have a start time.
   static Future<void> syncTaskReminders(List<Task> tasks, int reminderMinutes) async {
     if (!_ready) return;
+    try {
+      await _syncTaskReminders(tasks, reminderMinutes);
+    } catch (e) {
+      debugPrint('Task reminders failed: $e');
+    }
+  }
+
+  static Future<void> _syncTaskReminders(List<Task> tasks, int reminderMinutes) async {
     for (final p in await plugin.pendingNotificationRequests()) {
       if (p.payload?.startsWith(_taskPayloadPrefix) ?? false) await plugin.cancel(p.id);
     }

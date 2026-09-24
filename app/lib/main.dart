@@ -22,9 +22,19 @@ Future<void> main() async {
       systemNavigationBarColor: AppColors.surface,
     ),
   );
+  // Device extras must never stop the app from opening: if the widget or
+  // notification plugin fails, log it and start the app anyway.
   if (supportsDeviceFeatures) {
-    await HomeWidget.registerInteractivityCallback(widgetBackgroundCallback);
-    await Notifications.init();
+    try {
+      await HomeWidget.registerInteractivityCallback(widgetBackgroundCallback);
+    } catch (e) {
+      debugPrint('Home widget setup failed: $e');
+    }
+    try {
+      await Notifications.init();
+    } catch (e) {
+      debugPrint('Notification setup failed: $e');
+    }
   }
   runApp(ChangeNotifierProvider(create: (_) => AppState()..start(), child: const FocusSystemApp()));
 }

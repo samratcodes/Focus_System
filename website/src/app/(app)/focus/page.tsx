@@ -1,9 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Maximize2, Music, Pause, Play, RotateCcw, SkipForward, Square } from "lucide-react";
+import { Brain, Coffee, Maximize2, Music, Pause, Play, RotateCcw, SkipForward, Sofa, Square } from "lucide-react";
 import YoutubeFrame from "@/components/YoutubeFrame";
-import { tasksForDate, useStore } from "@/lib/client/store";
+import { tasksForDate, useStore, type FocusMode } from "@/lib/client/store";
 import { useTimer } from "@/lib/client/timer";
 import { useToast } from "@/lib/client/toast";
 import { requestNotificationPermission } from "@/lib/client/sound";
@@ -13,9 +13,15 @@ import type { UserSettings } from "@/lib/shared/types";
 const RADIUS = 115;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
+const MODES: { mode: FocusMode; label: string; icon: typeof Brain }[] = [
+  { mode: "work", label: "Focus", icon: Brain },
+  { mode: "shortBreak", label: "Short break", icon: Coffee },
+  { mode: "longBreak", label: "Long break", icon: Sofa },
+];
+
 export default function FocusPage() {
   const store = useStore();
-  const { data, today, focusAction, attachTask, updateSettings, overlayOpen, setOverlayOpen, musicPlaying, setMusicPlaying } =
+  const { data, today, focusAction, setFocusMode, attachTask, updateSettings, overlayOpen, setOverlayOpen, musicPlaying, setMusicPlaying } =
     store;
   const { secondsLeft, progress } = useTimer();
   const toast = useToast();
@@ -34,6 +40,16 @@ export default function FocusPage() {
   const options = attached && !openTasks.includes(attached) ? [attached, ...openTasks] : openTasks;
   const logs = data.pomoLogs.filter((l) => l.date === today);
   const isWork = focus.mode === "work";
+
+  // Where we are in the cycle of work sessions before a long break.
+  const interval = settings.pomoLongInterval;
+  const doneInCycle = focus.sessionCount % interval;
+  const nextIsLong = isWork && (focus.sessionCount + 1) % interval === 0;
+  const nextLabel = isWork
+    ? nextIsLong
+      ? `Long break · ${settings.pomoLongBreak} min`
+      : `Short break · ${settings.pomoShortBreak} min`
+    : `Focus · ${settings.pomoWork} min`;
 
   const saveMusic = async (silent = false) => {
     const clean = url.trim();
@@ -69,6 +85,21 @@ export default function FocusPage() {
   return (
     <div className="focus-layout">
       <div className="focus-timer-area">
+        <div className="mode-tabs" role="tablist" aria-label="Timer mode">
+          {MODES.map(({ mode, label, icon: Icon }) => (
+            <button
+              key={mode}
+              role="tab"
+              aria-selected={focus.mode === mode}
+              className={`${focus.mode === mode ? "active" : ""} ${mode !== "work" ? "break" : ""}`}
+              onClick={() => focus.mode !== mode && setFocusMode(mode)}
+              title={label}
+            >
+              <Icon />
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
         <div className="timer-ring">
           <svg width="260" height="260" viewBox="0 0 260 260">
             <circle className="ring-bg" cx="130" cy="130" r={RADIUS} />
@@ -106,6 +137,16 @@ export default function FocusPage() {
               <SkipForward /> Skip
             </button>
           )}
+        </div>
+        <div className="cycle">
+          <div className="cycle-dots" title={`${doneInCycle} of ${interval} sessions until a long break`}>
+            {Array.from({ length: interval }, (_, i) => (
+              <i key={i} className={i < doneInCycle ? "done" : i === doneInCycle && isWork ? "current" : ""} />
+            ))}
+          </div>
+          <div className="cycle-next">
+            <Coffee /> Next: {nextLabel}
+          </div>
         </div>
         <div className="timer-sessions">
           Sessions completed: <span>{focus.sessionCount}</span>

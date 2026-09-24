@@ -35,8 +35,8 @@ class AppColors {
 }
 
 class AppRadius {
-  static const panel = 8.0; // .daily-board, .workflow-panel …
-  static const card = 10.0; // --radius (task cards)
+  static const panel = 12.0; // .daily-board, .workflow-panel … (v2: rounder)
+  static const card = 12.0; // task cards
   static const sm = 6.0; // --radius-sm (buttons, inputs)
   static const xs = 4.0;
 }
@@ -114,4 +114,14 @@ ThemeData buildTheme() {
     textSelectionTheme: const TextSelectionThemeData(cursorColor: AppColors.primary),
     progressIndicatorTheme: const ProgressIndicatorThemeData(color: AppColors.primary),
   );
+}
+
+class AppGradients {
+  /// Brand gradient (indigo → violet), same as the website's --grad-primary.
+  static const primary = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+  );
+  static const success = LinearGradient(colors: [Color(0xFF10B981), Color(0xFF34D399)]);
 }

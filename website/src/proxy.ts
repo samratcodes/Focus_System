@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const SESSION_COOKIE = "fs_session";
 const AUTH_PAGES = ["/login", "/register"];
+const PUBLIC_PAGES = ["/privacy"];
 
 /**
  * Optimistic page guard based on the presence of the session cookie. The real
@@ -10,6 +11,7 @@ const AUTH_PAGES = ["/login", "/register"];
  */
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+  if (PUBLIC_PAGES.includes(pathname)) return NextResponse.next();
   const signedIn = request.cookies.has(SESSION_COOKIE);
   const isAuthPage = AUTH_PAGES.includes(pathname);
 

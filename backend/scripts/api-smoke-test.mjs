@@ -124,6 +124,11 @@ check("task pomodoroCount incremented", boot2.data.tasks.find((t) => t.id === a.
 check("streak recorded today", boot2.data.streakDays.includes(localDate()));
 f = await call("POST", "/api/focus", { action: "skip" }, T);
 check("skip break -> work", f.data.focus.mode === "work" && f.data.focus.sessionCount === 1);
+f = await call("POST", "/api/focus", { action: "mode", mode: "longBreak" }, T);
+check("switch to long break", f.data.focus.mode === "longBreak" && !f.data.focus.running && f.data.focus.secondsLeft === 900);
+f = await call("POST", "/api/focus", { action: "mode", mode: "shortBreak" }, T);
+check("switch to short break", f.data.focus.mode === "shortBreak" && f.data.focus.totalSeconds === 300);
+check("invalid mode rejected", (await call("POST", "/api/focus", { action: "mode", mode: "nap" }, T)).status === 400);
 f = await call("POST", "/api/focus", { action: "reset" }, T);
 check("reset timer", f.data.focus.mode === "work" && !f.data.focus.running && f.data.focus.sessionCount === 0);
 

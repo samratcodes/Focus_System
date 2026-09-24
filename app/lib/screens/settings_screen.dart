@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../api.dart';
 import '../app_state.dart';
 import '../platform.dart';
 import '../logic.dart';
@@ -47,7 +49,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const AppHeader(),
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             children: [
               // Profile / progress (the web sidebar's "Progress" card)
               Panel(
@@ -257,6 +259,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ],
               ),
+              const SizedBox(height: 14),
+              _Section(
+                title: 'Privacy',
+                children: [
+                  const Text(
+                    'Your tasks are stored securely on the Focus System server and are only visible to you. '
+                    'We never sell or share your data.',
+                    style: AppText.muted,
+                  ),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Btn(
+                      label: 'Privacy policy',
+                      icon: LucideIcons.shieldCheck,
+                      kind: BtnKind.secondary,
+                      onPressed: () => launchUrl(Uri.parse(privacyPolicyUrl), mode: LaunchMode.externalApplication),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              const _DeleteAccountSection(),
               const SizedBox(height: 70),
             ],
           ),
@@ -298,4 +323,62 @@ String _initials(String name) {
   final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).take(2);
   final letters = parts.map((p) => p[0].toUpperCase()).join();
   return letters.isEmpty ? '?' : letters;
+}
+
+/// Google Play requires apps with accounts to offer account deletion in-app.
+class _DeleteAccountSection extends StatefulWidget {
+  const _DeleteAccountSection();
+  @override
+  State<_DeleteAccountSection> createState() => _DeleteAccountSectionState();
+}
+
+class _DeleteAccountSectionState extends State<_DeleteAccountSection> {
+  final _password = TextEditingController();
+  bool _busy = false;
+
+  @override
+  void dispose() {
+    _password.dispose();
+    super.dispose();
+  }
+
+  Future<void> _delete() async {
+    final s = context.read<AppState>();
+    if (_password.text.isEmpty) return s.toast('Enter your password to confirm', ToastType.error);
+    final ok = await confirmDialog(
+      context,
+      title: 'Delete your account?',
+      message: 'All tasks, goals, focus history and XP will be permanently deleted. This cannot be undone.',
+      confirmLabel: 'Delete forever',
+      danger: true,
+    );
+    if (!ok || !mounted) return;
+    setState(() => _busy = true);
+    final err = await s.deleteAccount(_password.text);
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (err != null) s.toast(err, ToastType.error);
+  }
+
+  @override
+  Widget build(BuildContext context) => Panel(
+    padding: const EdgeInsets.all(18),
+    borderColor: AppColors.danger.withValues(alpha: 0.35),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Kicker('Delete account', color: AppColors.danger),
+        const SizedBox(height: 10),
+        const Text('Permanently delete your account and all of its data.', style: AppText.muted),
+        const SizedBox(height: 10),
+        const FieldLabel('Password'),
+        TextField(controller: _password, obscureText: true),
+        const SizedBox(height: 10),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Btn(label: 'Delete account', kind: BtnKind.danger, busy: _busy, onPressed: _delete),
+        ),
+      ],
+    ),
+  );
 }

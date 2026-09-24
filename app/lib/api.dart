@@ -102,3 +102,6 @@ class Api {
     return data;
   }
 }
+
+/// Public privacy policy (required by Google Play), served by the website.
+const privacyPolicyUrl = 'https://focus-system-amber.vercel.app/privacy';

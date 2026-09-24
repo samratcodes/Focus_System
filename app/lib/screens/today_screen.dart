@@ -112,7 +112,7 @@ class _TodayScreenState extends State<TodayScreen> {
           child: RefreshIndicator(
             onRefresh: s.refresh,
             child: ListView(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(12),
               children: [
                 // .daily-board
                 Panel(

@@ -54,10 +54,10 @@ class CalendarScreen extends StatelessWidget {
           child: RefreshIndicator(
             onRefresh: s.refresh,
             child: ListView(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(12),
               children: [
                 Panel(
-                  padding: const EdgeInsets.all(14),
+                  padding: const EdgeInsets.all(12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

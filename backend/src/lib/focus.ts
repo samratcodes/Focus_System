@@ -117,6 +117,7 @@ export type FocusAction =
   | { action: "pause" }
   | { action: "reset" }
   | { action: "skip" }
+  | { action: "mode"; mode: FocusMode }
   | { action: "attach"; taskId: string | null };
 
 /** Applies a user action to the (already reconciled) timer. */
@@ -143,11 +144,21 @@ export async function applyFocusAction(user: User, f: FocusState, a: FocusAction
       break;
     case "skip": {
       // Jump to the next phase without logging a session.
-      const next: FocusMode = f.mode === "work" ? "shortBreak" : "work";
+      const next: FocusMode =
+        f.mode !== "work" ? "work" : (f.sessionCount + 1) % user.pomoLongInterval === 0 ? "longBreak" : "shortBreak";
       const secs = phaseSeconds(next, user);
       data.mode = next;
       data.secondsLeft = data.totalSeconds = secs;
       data.endsAt = f.running ? new Date(now + secs * 1000) : null;
+      break;
+    }
+    case "mode": {
+      // Jump straight to a phase (e.g. take a break now). Paused, full length, like a fresh timer.
+      const secs = phaseSeconds(a.mode, user);
+      data.mode = a.mode;
+      data.running = false;
+      data.endsAt = null;
+      data.secondsLeft = data.totalSeconds = secs;
       break;
     }
     case "attach":

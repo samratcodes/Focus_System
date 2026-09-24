@@ -704,29 +704,16 @@ a{color:inherit}
 .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--success);display:inline-block;margin-right:6px}
 .sync-dot.offline{background:var(--warning)}
 
-/* Auth pages */
-.auth-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto;height:100vh}
-.auth-card{width:100%;max-width:400px;background:var(--bg-surface);border:1px solid var(--border);border-radius:8px;padding:28px;display:flex;flex-direction:column;gap:18px;box-shadow:var(--shadow-lg)}
-.auth-card .sidebar-brand{padding:0;font-size:18px}
-.auth-card h1{font-size:22px;font-weight:850;line-height:1.2}
-.auth-card p.auth-sub{font-size:13px;color:var(--text-secondary);margin-top:4px}
-.auth-form{display:flex;flex-direction:column;gap:14px}
+/* Auth pages: see UI v2 layer at the end */
+.btn-block{width:100%;justify-content:center;padding:11px 16px;font-size:14px}
+.btn:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+.spin{animation:spin 0.9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 .field{display:flex;flex-direction:column;gap:5px}
 .field label{font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.04em}
 .field input,.field select,.field textarea{padding:10px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg-surface2);color:var(--text);font-size:14px;outline:none}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--primary)}
 .field small{font-size:12px;color:var(--text-muted)}
-.password-wrap{position:relative;display:flex}
-.password-wrap input{flex:1;padding-right:42px}
-.password-wrap .btn-icon{position:absolute;right:4px;top:50%;transform:translateY(-50%)}
-.auth-error{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:var(--radius-sm);background:var(--danger-bg);color:var(--danger);font-size:13px;font-weight:700}
-.auth-error svg{width:16px;height:16px;flex-shrink:0}
-.auth-switch{font-size:13px;color:var(--text-secondary);text-align:center}
-.auth-switch a{color:var(--primary);font-weight:700;text-decoration:none}
-.btn-block{width:100%;justify-content:center;padding:11px 16px;font-size:14px}
-.btn:disabled{opacity:0.6;cursor:not-allowed;transform:none}
-.spin{animation:spin 0.9s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
 
 /* Loading */
 .app-loading{height:100vh;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;color:var(--text-muted);font-size:13px;font-weight:800}

@@ -88,8 +88,10 @@ class Btn extends StatelessWidget {
     this.expand = false,
     this.busy = false,
     this.semanticLabel,
+    this.large = false,
   });
   final String label;
+  final bool large;
   final String? semanticLabel; // for icon-only buttons
   final IconData? icon;
   final VoidCallback? onPressed;
@@ -108,6 +110,8 @@ class Btn extends StatelessWidget {
       BtnKind.ghost => (Colors.transparent, AppColors.textSecondary),
     };
     final disabled = onPressed == null || busy;
+    final radius = BorderRadius.circular(round ? 99 : (small ? AppRadius.xs : (large ? 12 : AppRadius.sm)));
+    final fontSize = small ? 12.0 : (round || large ? 15.0 : 13.0);
     final child = Row(
       mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -115,15 +119,20 @@ class Btn extends StatelessWidget {
         if (busy)
           SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2, color: fg))
         else if (icon != null)
-          Icon(icon, size: small ? 14 : (round ? 20 : 17), color: fg),
+          Icon(icon, size: small ? 14 : (round || large ? 19 : 16), color: fg),
         if ((icon != null || busy) && label.isNotEmpty) SizedBox(width: small ? 5 : 7),
-        if (label.isNotEmpty)
-          Text(
-            label,
-            style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: small ? 12 : (round ? 15 : 13)),
-          ),
+        if (label.isNotEmpty) Text(label, style: TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: fontSize)),
       ],
     );
+    final padding =
+        round
+            ? const EdgeInsets.symmetric(horizontal: 24, vertical: 12)
+            : small
+            ? const EdgeInsets.symmetric(horizontal: 12, vertical: 6)
+            : large
+            ? const EdgeInsets.symmetric(horizontal: 18, vertical: 14)
+            : const EdgeInsets.symmetric(horizontal: 14, vertical: 9);
+    final isPrimary = kind == BtnKind.primary;
     return Semantics(
       container: true,
       button: true,
@@ -132,20 +141,29 @@ class Btn extends StatelessWidget {
       excludeSemantics: true,
       child: Opacity(
         opacity: disabled && !busy ? 0.6 : 1,
-        child: Material(
-          color: bg,
-          borderRadius: BorderRadius.circular(round ? 99 : (small ? AppRadius.xs : AppRadius.sm)),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(round ? 99 : (small ? AppRadius.xs : AppRadius.sm)),
-            onTap: disabled ? null : onPressed,
-            child: Padding(
-              padding:
-                  round
-                      ? const EdgeInsets.symmetric(horizontal: 24, vertical: 12)
-                      : small
-                      ? const EdgeInsets.symmetric(horizontal: 12, vertical: 6)
-                      : const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: child,
+        // Primary buttons use the brand gradient + glow, like the website.
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            gradient: isPrimary ? AppGradients.primary : null,
+            color: isPrimary ? null : bg,
+            boxShadow:
+                isPrimary && !disabled
+                    ? [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.35),
+                        blurRadius: 14,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                    : null,
+          ),
+          child: Material(
+            type: MaterialType.transparency,
+            child: InkWell(
+              borderRadius: radius,
+              onTap: disabled ? null : onPressed,
+              child: Padding(padding: padding, child: child),
             ),
           ),
         ),
